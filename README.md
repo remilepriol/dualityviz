@@ -1,5 +1,7 @@
 # Convex Duality Viz
 
+A demo is available at <https://remilepriol.github.io/conjugate> 
+
 ## How to run
 
 Dependencies are python 3 and `numpy, matplotlib, bokeh`. 
