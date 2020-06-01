@@ -124,8 +124,8 @@ def plot_conjugate(funcp, xx):
     opts = dict(plot_width=pixelsize, plot_height=pixelsize)
 
     # plot the primal function
-    fig1 = plotting.figure(title='Primal f(x)', **opts,
-                           tools='pan,wheel_zoom', active_scroll='wheel_zoom',
+    fig1 = plotting.figure(title='Primal f(x)', **opts, tools='pan',
+                           # tools='pan,wheel_zoom', active_scroll='wheel_zoom',
                            x_axis_label='x', y_axis_label='y')
     set_range(fig1, xx, ff)
 
@@ -141,11 +141,20 @@ def plot_conjugate(funcp, xx):
                               source=ColumnDataSource(dict(x=[], y=[])))
     primalheight = fig1.line('x', 'y', line_width=3, color=heightcolor,
                              source=ColumnDataSource(dict(x=[], y=[])))
+    primalgap = fig1.line('x', 'y', line_width=2, color='grey', alpha=.8,
+                          source=ColumnDataSource(dict(x=[], y=[])))
+
+    ## trying a variation with arrows to indicate direction
+    # primalheight = models.Arrow(
+    #     x_start='x_start', y_start='y_start', x_end='x_end', y_end='y_end',
+    #     source=ColumnDataSource(data={
+    #         'x_start': [], 'y_start': [], 'x_end': [], 'y_end': [], 'x': [], 'y': []
+    #     }))
+    # fig1.add_layout(primalheight)
 
     # plot the conjugate function
     fig2 = plotting.figure(title='Dual f*(g)', **opts,
-                           tools='pan,wheel_zoom', active_scroll='wheel_zoom',
-                           x_axis_label='g', y_axis_label='y')
+                           tools='pan', x_axis_label='g', y_axis_label='y')
     set_range(fig2, gg, fc)
     fig2.line('gg', 'fc', source=dual_source, line_width=3, color=dualcolor)
 
@@ -155,6 +164,8 @@ def plot_conjugate(funcp, xx):
                             source=ColumnDataSource(dict(g=[], y=[])))
     dualheight = fig2.line('g', 'y', line_width=3, color=heightcolor,
                            source=ColumnDataSource(dict(g=[], y=[])))
+    dualgap = fig2.line('g', 'y', line_width=2, color='grey', alpha=.8,
+                        source=ColumnDataSource(dict(g=[], y=[])))
 
     # highlight lines x=0 and y=0 in primal and dual plots
     for fig in [fig1, fig2]:
@@ -168,13 +179,14 @@ def plot_conjugate(funcp, xx):
     # fig1.add_layout(infolabel)
 
     # plot gradients
-    fig3 = plotting.figure(title='Derivatives', **opts,
+    fig3 = plotting.figure(title='Derivatives', **opts, tools='',
                            x_axis_label='x', y_axis_label='g')
     fig3.line('xopt', 'gg', source=dual_source, line_width=3, color=dualcolor)
     fig3.line('xx', 'grad', source=primal_source, color=primalcolor, line_width=3)
 
     # IMAGES
-    images = [plotting.figure(**opts, x_axis_label='x', y_axis_label='g') for _ in range(3)]
+    images = [plotting.figure(**opts, tools='', x_axis_label='x', y_axis_label='g') for _ in
+              range(3)]
     for fig, name, colormap in zip(images, image_titles, monochromemaps):
         fig.title.text = image_titles[name]
         fig.image(image=name, x='x0', dw='delta_x', y='g0', dh='delta_g', alpha=.7,
@@ -196,8 +208,10 @@ def plot_conjugate(funcp, xx):
     hpoint = images[0].add_glyph(ColumnDataSource(data=dict(x=[], g=[])), gxcircle)
     vline = images[1].add_glyph(ColumnDataSource(data=dict(x=[], g=[])), gxline)
     vpoint = images[1].add_glyph(ColumnDataSource(data=dict(x=[], g=[])), gxcircle)
-    fig3.add_glyph(hpoint.data_source, gxcircle)
-    fig3.add_glyph(vpoint.data_source, gxcircle)
+
+    for fig in [fig3, images[2]]:
+        fig.add_glyph(hpoint.data_source, gxcircle)
+        fig.add_glyph(vpoint.data_source, gxcircle)
 
     ##############
     # INTERACTIONS
@@ -231,46 +245,46 @@ def plot_conjugate(funcp, xx):
             'primal': primal_source, 'dual': dual_source, 'source2d': source2d
         },
         code="""
-        const xs = x_shift.value;
-        const fs = f_shift.value;
-        const gs = g_shift.value;
-        const xd = x_dilate.value;
-        const fd = f_dilate.value;
-        
-        function xtransform(x){
-            return (x + xs)/xd
-        }
-        function gtransform(g){
-            return xd * fd * g + gs
-        }
-        
-        let new_xx = xx.map(xtransform);
-        let new_gg = gg.map(gtransform);
-        
-        for (let i=0; i<primal.data['xx'].length ;i++){
-            primal.data['xx'][i] = new_xx[i];
-            primal.data['gzeros'][i] = gtransform(0);
-            primal.data['grad'][i] = gtransform(grad[i]);
-            primal.data['gopt'][i] = gtransform(gopt[i]);
-            primal.data['ff'][i] = fd * ff[i] + gs * xx[i]  + fs;
-            primal.data['fcc'][i] = fd * fcc[i] + gs * xx[i]  + fs;
-        }
-        primal.change.emit();
-
-        for (let i=0; i<dual.data['gg'].length ;i++){
-            dual.data['xzeros'][i] = xtransform(0);
-            dual.data['xopt'][i] = xtransform(xopt[i]) ;
-            dual.data['gg'][i] = new_gg[i];
-            dual.data['fc'][i] = fd*fc[i] + xs*fd*dual.data['gg'][i] - fs;
-        }         
-        dual.change.emit();
-        
-        source2d.data['x0'][0] = new_xx[0];
-        source2d.data['delta_x'][0] = new_xx[new_xx.length-1] - new_xx[0];
-        source2d.data['g0'][0] = new_gg[0];
-        source2d.data['delta_g'][0] = new_gg[new_gg.length-1] - new_gg[0];
-        source2d.change.emit();
-        """
+            const xs = x_shift.value;
+            const fs = f_shift.value;
+            const gs = g_shift.value;
+            const xd = x_dilate.value;
+            const fd = f_dilate.value;
+            
+            function xtransform(x){
+                return (x + xs)/xd
+            }
+            function gtransform(g){
+                return xd * fd * g + gs
+            }
+            
+            let new_xx = xx.map(xtransform);
+            let new_gg = gg.map(gtransform);
+            
+            for (let i=0; i<primal.data['xx'].length ;i++){
+                primal.data['xx'][i] = new_xx[i];
+                primal.data['gzeros'][i] = gtransform(0);
+                primal.data['grad'][i] = gtransform(grad[i]);
+                primal.data['gopt'][i] = gtransform(gopt[i]);
+                primal.data['ff'][i] = fd * ff[i] + gs * xx[i]  + fs;
+                primal.data['fcc'][i] = fd * fcc[i] + gs * xx[i]  + fs;
+            }
+            primal.change.emit();
+    
+            for (let i=0; i<dual.data['gg'].length ;i++){
+                dual.data['xzeros'][i] = xtransform(0);
+                dual.data['xopt'][i] = xtransform(xopt[i]) ;
+                dual.data['gg'][i] = new_gg[i];
+                dual.data['fc'][i] = fd*fc[i] + xs*fd*dual.data['gg'][i] - fs;
+            }         
+            dual.change.emit();
+            
+            source2d.data['x0'][0] = new_xx[0];
+            source2d.data['delta_x'][0] = new_xx[new_xx.length-1] - new_xx[0];
+            source2d.data['g0'][0] = new_gg[0];
+            source2d.data['delta_g'][0] = new_gg[new_gg.length-1] - new_gg[0];
+            source2d.change.emit();
+            """
     )
     for slider in sliders_dict.values():
         slider.js_on_change('value', slider_callback)
@@ -280,9 +294,11 @@ def plot_conjugate(funcp, xx):
         'tangent': primaltangent.data_source,
         'point': primalpoint.data_source,
         'primalheight': primalheight.data_source,
+        'primalgap': primalgap.data_source,
         'dualpoint': dualpoint.data_source,
         'dualtangent': dualtangent.data_source,
         'dualheight': dualheight.data_source,
+        'dualgap': dualgap.data_source,
         'hpoint': hpoint.data_source,
         'vpoint': vpoint.data_source,
         'hline': hline.data_source,
@@ -299,51 +315,104 @@ def plot_conjugate(funcp, xx):
     fig1.js_on_event(bokeh.events.MouseMove, CustomJS(
         args=source_dict,
         code="""
-        let x0 = cb_obj.x;
-        let xx = primal.data['xx'];
-        let i = xx.findIndex(x => x >=x0);
-        if (i==-1){i = xx.length-1};
-        let x1 = xx[i];
-        let y1 = primal.data['fcc'][i];
-        point.data['x'] = [x1];
-        point.data['y'] = [y1];
-        point.change.emit();
-        primalheight.data['x'] = [x1, x1];
-        primalheight.data['y'] = [0, y1];
-        primalheight.change.emit();
-
-        let j = primal.data['idgopt'][i];
-        let gg = dual.data['gg'];
-        let g1 = gg[j];
-        let fc1 = dual.data['fc'][j];        
-        dualpoint.data['g'] = [g1];
-        dualpoint.data['y'] = [fc1];
-        dualpoint.change.emit();
-
-        dualheight.data['g'] = [0,0];
-        dualheight.data['y'] = [0,fc1 - g1*x1];
-        dualheight.change.emit();
-
-        dualtangent.data['g'] = [gg[0]-1000, gg[gg.length-1]+1000];
-        dualtangent.data['y'] = dualtangent.data['g'].map(g => fc1 + x1*(g-g1));
-        dualtangent.change.emit();
-
-        vpoint.data['x'] = [x1];
-        vpoint.data['g'] = [g1];
-        vpoint.change.emit();   
-             
-        vline.data['x'] = [x1, x1];
-        vline.data['g'] = [gg[0], gg[gg.length - 1]];
-        vline.change.emit();
-        """
+            let x0 = cb_obj.x;
+            let xx = primal.data['xx'];
+            let i = xx.findIndex(x => x >=x0);
+            if (i==-1){i = xx.length-1};
+            let x1 = xx[i];
+            let y1 = primal.data['fcc'][i];
+            point.data['x'] = [x1];
+            point.data['y'] = [y1];
+            point.change.emit();
+    
+            let j = primal.data['idgopt'][i];
+            let gg = dual.data['gg'];
+            let g1 = gg[j];
+            let fc1 = dual.data['fc'][j];        
+            dualpoint.data['g'] = [g1];
+            dualpoint.data['y'] = [fc1];
+            dualpoint.change.emit();
+    
+            primalheight.data['x'] = [x1,x1];
+            primalheight.data['y'] = [0,y1]
+            primalheight.change.emit();
+    
+            dualheight.data['g'] = [0,0];
+            dualheight.data['y'] = [0,fc1 - g1*x1];
+            dualheight.change.emit();
+    
+            dualtangent.data['g'] = [gg[0]-1000, gg[gg.length-1]+1000];
+            dualtangent.data['y'] = dualtangent.data['g'].map(g => fc1 + x1*(g-g1));
+            dualtangent.change.emit();
+    
+            vpoint.data['x'] = [x1];
+            vpoint.data['g'] = [g1];
+            vpoint.change.emit();   
+                 
+            vline.data['x'] = [x1, x1];
+            vline.data['g'] = [gg[0], gg[gg.length - 1]];
+            vline.change.emit();
+            """
     ))
 
     # hover over dual plot
     fig2.js_on_event(bokeh.events.MouseMove, CustomJS(
         args=source_dict,
         code="""
-        let g0 = cb_obj.x;
+            let g0 = cb_obj.x;
+            let gg = dual.data['gg'];
+            let j = gg.findIndex(g => g >=g0);
+            if (j==-1){j = gg.length-1};
+            let g1 = gg[j];
+            let fc1 = dual.data['fc'][j];
+            dualpoint.data['g'] = [g1];
+            dualpoint.data['y'] = [fc1];
+            dualpoint.change.emit();
+    
+            dualheight.data['g'] = [g1, g1];
+            dualheight.data['y'] = [0, fc1];
+            dualheight.change.emit();
+    
+            let i = dual.data['idxopt'][j];
+            let xx = primal.data['xx'];
+            let x1 = xx[i];
+            let y1 = primal.data['ff'][i];        
+            point.data['x'] = [x1];
+            point.data['y'] = [y1];
+            point.change.emit();
+    
+            tangent.data['x'] = [xx[0]-1000, xx[xx.length-1]+1000];
+            tangent.data['y'] = tangent.data['x'].map(x => g1*(x-x1) + y1);
+            tangent.change.emit();
+    
+            primalheight.data['x'] = [0,0];
+            primalheight.data['y'] = [0,y1 - g1*x1];
+            primalheight.change.emit();
+    
+            hpoint.data['x'] = [x1];
+            hpoint.data['g'] = [g1];
+            hpoint.change.emit();        
+            
+            hline.data['x'] = [xx[0], xx[xx.length - 1]];
+            hline.data['g'] = [g1, g1];
+            hline.change.emit();
+            """
+    ))
+
+    code_get_xg = """
+        let x0 = cb_obj.x;
+        let g0 = cb_obj.y;
+        let xx = primal.data['xx'];
         let gg = dual.data['gg'];
+        
+        let i = xx.findIndex(x => x >=x0);
+        if (i==-1){i = xx.length-1};
+        let x1 = xx[i];
+        let y1 = primal.data['ff'][i];
+        point.data['x'] = [x1];
+        point.data['y'] = [y1];
+        point.change.emit();
+        
         let j = gg.findIndex(g => g >=g0);
         if (j==-1){j = gg.length-1};
         let g1 = gg[j];
@@ -351,48 +420,79 @@ def plot_conjugate(funcp, xx):
         dualpoint.data['g'] = [g1];
         dualpoint.data['y'] = [fc1];
         dualpoint.change.emit();
-
-        dualheight.data['g'] = [g1, g1];
-        dualheight.data['y'] = [0, fc1];
-        dualheight.change.emit();
-
-        let i = dual.data['idxopt'][j];
-        let xx = primal.data['xx'];
-        let x1 = xx[i];
-        let y1 = primal.data['ff'][i];        
-        point.data['x'] = [x1];
-        point.data['y'] = [y1];
-        point.change.emit();
-
-        tangent.data['x'] = [xx[0]-1000, xx[xx.length-1]+1000];
-        tangent.data['y'] = tangent.data['x'].map(x => g1*(x-x1) + y1);
-        tangent.change.emit();
-
-        primalheight.data['x'] = [0,0];
-        primalheight.data['y'] = [0,y1 - g1*x1];
-        primalheight.change.emit();
-
-        hpoint.data['x'] = [x1];
-        hpoint.data['g'] = [g1];
-        hpoint.change.emit();        
-        
-        hline.data['x'] = [xx[0], xx[xx.length - 1]];
-        hline.data['g'] = [g1, g1];
-        hline.change.emit();
         """
+
+    # hover over g.x-f(x)
+    images[0].js_on_event(bokeh.events.MouseMove, CustomJS(
+        args=source_dict,
+        code=code_get_xg + """
+            hpoint.data['x'] = [x1];
+            hpoint.data['g'] = [g1];
+            hpoint.change.emit();        
+    
+            hline.data['x'] = [xx[0], xx[xx.length - 1]];
+            hline.data['g'] = [g1, g1];
+            hline.change.emit();
+            
+            tangent.data['x'] = [xx[0]-1000, xx[xx.length-1]+1000];
+            tangent.data['y'] = tangent.data['x'].map(x => g1*(x-x1) + y1);
+            tangent.change.emit();
+    
+            primalheight.data['x'] = [0,0];
+            primalheight.data['y'] = [0,y1 - g1*x1];
+            primalheight.change.emit();
+            
+            dualheight.data['g'] = [g1, g1];
+            dualheight.data['y'] = [0, g1*x1-y1];
+            dualheight.change.emit();
+            
+            dualgap.data['g'] = [g1, g1];
+            dualgap.data['y'] = [g1*x1-y1, fc1];
+            dualgap.change.emit();
+            """
+    ))
+
+    # hover over g.x-f*(g)
+    images[1].js_on_event(bokeh.events.MouseMove, CustomJS(
+        args=source_dict,
+        code=code_get_xg + """
+            vpoint.data['x'] = [x1];
+            vpoint.data['g'] = [g1];
+            vpoint.change.emit();   
+                 
+            vline.data['x'] = [x1, x1];
+            vline.data['g'] = [gg[0], gg[gg.length - 1]];
+            vline.change.emit();
+            
+            dualtangent.data['g'] = [gg[0]-1000, gg[gg.length-1]+1000];
+            dualtangent.data['y'] = dualtangent.data['g'].map(g => fc1 + x1*(g-g1));
+            dualtangent.change.emit();
+            
+            dualheight.data['g'] = [0,0];
+            dualheight.data['y'] = [0,fc1 - g1*x1];
+            dualheight.change.emit();
+    
+            primalheight.data['x'] = [x1, x1];
+            primalheight.data['y'] = [0, g1*x1-fc1];
+            primalheight.change.emit();
+            
+            primalgap.data['x'] = [x1, x1];
+            primalgap.data['y'] = [g1*x1-fc1, y1];
+            primalgap.change.emit();
+            """
     ))
 
     # Remove all temporary glyphs on MouseLeave
     jsleave = CustomJS(
         args={'sourcelist': list(hover_source_dict.values())},
         code="""
-        for(let source of sourcelist){
-            for(let key in source.data){
-                source.data[key]=[];
+            for(let source of sourcelist){
+                for(let key in source.data){
+                    source.data[key]=[];
+                }
+                source.change.emit();
             }
-            source.change.emit();
-        }
-        """
+            """
     )
     for fig in [fig1, fig2, fig3] + images:
         fig.js_on_event(bokeh.events.MouseLeave, jsleave)
