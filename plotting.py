@@ -12,11 +12,11 @@ def colormap2hexpalette(cmlist):
     Useful to get uniform sequential colormaps of length 256 with a single hue
     that are compatible with Bokeh, as this is not provided by default.
     """
-    hexpalettes = {}
+    hexpalettes = []
     for cmname in cmlist:
         rgbalist = matplotlib.cm.get_cmap(cmname)(np.linspace(0.0, 1.0, 256))
         hexlist = [matplotlib.colors.to_hex(c) for c in rgbalist]
-        hexpalettes[cmname] = hexlist
+        hexpalettes += [hexlist]
     return hexpalettes
 
 
@@ -52,8 +52,8 @@ def legendre(funcp, xrange):
     grad = np.concatenate(([grad[0]], grad))
 
     # get range of gradients, defining the domain of the dual
-    mg = min(grad)
-    Mg = max(grad)
+    mg = min(grad) - .1
+    Mg = max(grad) + .1
     grange = np.linspace(mg - 0.2 * (Mg - mg), Mg + 0.2 * (Mg - mg), len(xrange))
 
     # get f conjugate fc
@@ -102,11 +102,9 @@ def plot_conjugate(funcp, xx):
         'x0': [xx[0]], 'delta_x': [xx[-1] - xx[0]],
         'g0': [gg[0]], 'delta_g': [gg[-1] - gg[0]]
     })
-    image_titles = {'gxminusf': 'g.x - f(x)',
-                    'gxminusfc': 'g.x - f*(g)',
-                    'youngs': 'f(x)+f*(g)-g.x'}
-    # cannot use formula strings in the source to satisfy JS
-    # when souce2d.data as argument to a callback
+    image_titles = {'gxminusf': 'g.x - f(x) (maximize on x to get f*)',
+                    'gxminusfc': 'g.x - f*(g) (maximize on g to get f**)',
+                    'youngs': "Young's duality gap f(x)+f*(g)-g.x"}
 
     # COLORS
     palette = palettes.Category10_10  # palettes.Colorblind7
@@ -116,7 +114,7 @@ def plot_conjugate(funcp, xx):
     tangentcolor = palette[3]
     heightcolor = palette[4]
 
-    monochromemaps = colormap2hexpalette(['Oranges', 'Blues', 'Purples'])
+    monochromemaps = colormap2hexpalette(['Purples', 'Purples', 'Greys'])
 
     ########
     # GLYPHS
@@ -177,7 +175,7 @@ def plot_conjugate(funcp, xx):
 
     # IMAGES
     images = [plotting.figure(**opts, x_axis_label='x', y_axis_label='g') for _ in range(3)]
-    for fig, name, colormap in zip(images, image_titles, monochromemaps.values()):
+    for fig, name, colormap in zip(images, image_titles, monochromemaps):
         fig.title.text = image_titles[name]
         fig.image(image=name, x='x0', dw='delta_x', y='g0', dh='delta_g', alpha=.7,
                   source=source2d, palette=colormap)
@@ -190,7 +188,8 @@ def plot_conjugate(funcp, xx):
                    color=primalcolor if is_f_convex else envelopecolor, line_width=lw)
 
     # temporary hover glyphs
-    gxcircle = models.Circle(x='x', y='g', size=10, fill_color=tangentcolor, line_color=tangentcolor, fill_alpha=.7)
+    gxcircle = models.Circle(x='x', y='g', size=10, fill_color=tangentcolor,
+                             line_color=tangentcolor, fill_alpha=.7)
     gxline = models.Line(x='x', y='g', line_width=lw, line_color=tangentcolor)
 
     hline = images[0].add_glyph(ColumnDataSource(data=dict(x=[], g=[])), gxline)
@@ -204,9 +203,9 @@ def plot_conjugate(funcp, xx):
     # INTERACTIONS
     ##############
     # SLIDERS:  Scaling the primal with 5 sliders
-    deltax = (max(xx) - min(xx))
-    deltay = (max(ff) - min(ff))
-    deltag = (max(gg) - min(gg))
+    deltax = (max(xx) - min(xx)) + .1
+    deltay = (max(ff) - min(ff)) + .1
+    deltag = (max(gg) - min(gg)) + .1
     sliders_dict = {
         'x_shift': models.Slider(
             start=-deltax, end=deltax, value=0, step=deltax / 100, title="x shift"
@@ -253,8 +252,8 @@ def plot_conjugate(funcp, xx):
             primal.data['gzeros'][i] = gtransform(0);
             primal.data['grad'][i] = gtransform(grad[i]);
             primal.data['gopt'][i] = gtransform(gopt[i]);
-            primal.data['ff'][i] = fd * ff[i] + gs * primal.data['xx'][i]  + fs;
-            primal.data['fcc'][i] = fd * fcc[i] + gs * primal.data['xx'][i]  + fs;
+            primal.data['ff'][i] = fd * ff[i] + gs * xx[i]  + fs;
+            primal.data['fcc'][i] = fd * fcc[i] + gs * xx[i]  + fs;
         }
         primal.change.emit();
 
