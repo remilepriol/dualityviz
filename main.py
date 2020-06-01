@@ -30,10 +30,10 @@ functiondict = {
     'absolute value': (np.abs, -1, 1),
     'x**4': (lambda x: x ** 4, -1, 1),
     'x**4 + 4 x**3': (lambda x: x ** 4 + 4 * x ** 3, -1, 1),
-    'sin(x)': (np.sin, -np.pi, 0),
-    'Entropy(x) = x log(x) + (1-x) log(1-x)': (entropy, 0, 1),
+    #'sin(x)': (np.sin, -np.pi, 0),
+    #'Entropy(x) = x log(x) + (1-x) log(1-x)': (entropy, 0, 1),
     'x**2 - cos(2 x)': (lambda x: x ** 2 - np.cos(2 * x), -5, 5),
-    'x sin(1/x)': (lambda x: x * np.sin(1 / x), -1, 1),
+    #'x sin(1/x)': (lambda x: x * np.sin(1 / x), -1, 1),
     #'0': (np.zeros_like, -1, 1), # not working yet
     # 'Hinge(x) = max(0,1-x)': (hinge, -2, 2),
     # 'Hinge(x)**2': (squared_hinge, -2, 2),
@@ -48,8 +48,7 @@ figlist = [models.Div(text='<h1>Convex Conjugate Visualization</h1> \n' + abstra
 for name, (func, inf, sup) in functiondict.items():
     figlist += [layouts.column(
         models.Div(text=f'<h2>{name}</h2>'),
-        plot_conjugate(func, np.linspace(inf, sup, 200))
+        plot_conjugate(func, np.linspace(inf, sup, 150))
     )]
-    break
 
 bokeh.io.save(layouts.column(figlist), title='conjugates', filename='conjugate.html', )
