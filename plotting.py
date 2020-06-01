@@ -266,67 +266,6 @@ def plot_conjugate(funcp, xx):
     for slider in sliders_dict.values():
         slider.js_on_change('value', slider_callback)
 
-    # x_dilate_slider.js_on_change('value', CustomJS(
-    #     args=slider_args,
-    #     code="""
-    #     console.log(cb_obj,cb_obj.new,cb_obj.old,cb_obj.attr)
-    #     let previous_x_dilate = primal.data['xx'][1]/xx[1];
-    #     let dx = cb_obj.value / previous_x_dilate;
-    #     for (let i=0; i<primal.data['xx'].length ;i++){
-    #         primal.data['xx'][i] *= dx ;
-    #     }
-    #     primal.change.emit();
-    #
-    #     for (let i=0; i<dual.data['gg'].length ;i++){
-    #         dual.data['gg'][i] /= dx;
-    #         dual.data['xopt'][i] += dx;
-    #     }
-    #     dual.change.emit();
-    #
-    #     source2d.data['x'][0] += dx;
-    #     source2d.change.emit();
-    #     """
-    # ))
-    # y_shift_slider.js_on_change('value', CustomJS(
-    #     args=slider_args,
-    #     code="""
-    #     let previous_y_shift = primal.data['ff'][0]-ff[0];
-    #     let dy = cb_obj.value - previous_y_shift;
-    #     for (let i=0; i<primal.data['xx'].length ;i++){
-    #         primal.data['ff'][i] += dy;
-    #         primal.data['fcc'][i] += dy;
-    #     }
-    #     primal.change.emit();
-    #
-    #     for (let i=0; i<dual.data['gg'].length ;i++){
-    #         dual.data['fc'][i] -= dy;
-    #     }
-    #     dual.change.emit();
-    #     """
-    # ))
-    # g_shift_slider.js_on_change('value', CustomJS(
-    #     args=slider_args,
-    #     code="""
-    #     let previous_g_shift = dual.data['gg'][0]-gg[0];
-    #     let dg = cb_obj.value - previous_g_shift;
-    #     for (let i=0; i<primal.data['xx'].length ;i++){
-    #         primal.data['ff'][i] += dg * primal.data['xx'][i];
-    #         primal.data['fcc'][i] += dg * primal.data['xx'][i];
-    #         primal.data['grad'][i] += dg;
-    #         primal.data['gopt'][i] += dg;
-    #     }
-    #     primal.change.emit();
-    #
-    #     for (let i=0; i<dual.data['gg'].length ;i++){
-    #         dual.data['gg'][i] += dg;
-    #     }
-    #     dual.change.emit();
-    #
-    #     source2d.data['y'][0] += dg;
-    #     source2d.change.emit();
-    #     """
-    # ))
-
     # HOVERING
     hover_source_dict = {
         'tangent': primaltangent.data_source,
