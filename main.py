@@ -44,11 +44,12 @@ abstract=''
 # with open('abstract.txt', 'r') as file:
 #     abstract = file.read()
 
-figlist = [models.Div(text='<h1>Convex Duality Visualization</h1> \n' + abstract)]
+figlist = [models.Div(text='<h1>Convex Conjugate Visualization</h1> \n' + abstract)]
 for name, (func, inf, sup) in functiondict.items():
     figlist += [layouts.column(
         models.Div(text=f'<h2>{name}</h2>'),
         plot_conjugate(func, np.linspace(inf, sup, 200))
     )]
+    break
 
 bokeh.io.save(layouts.column(figlist), title='conjugates', filename='conjugate.html', )

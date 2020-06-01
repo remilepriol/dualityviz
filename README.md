@@ -30,17 +30,13 @@ The simpler alternative on which I focus here is Bokeh, a python library which l
     * [x] in the dual plot $(g,f^*(g))$ it shows the corresponding tangent of slope g in the primal plot, along with all the primal points $(x,f(x))$ that lie on this tangent.
     * [x] add vertical line from (0,0) to (0,linear approximation) to highlight the construction of the causal model.
     * [x] in the primal plot it shows the convex enveloppe reconstruction from the dual function.
-    * [ ] in the heatmap $(x,g)$,  it shows in the primal the line at coordinate $(x,f(x))$ with slope $g$. In the dual $(g, f^*(g))$ with slope $x$. 
-        Maybe decide on some difference between each plot
-    * what about the gradient ?
+    * [x] in the heatmap $(x,g)$,  it shows in the primal the line at coordinate $(x,f(x))$ with slope $g$. In the dual $(g, f^*(g))$ with slope $x$. 
 * I add sliders to control [scaling properties](https://en.wikipedia.org/wiki/Convex_conjugate#Scaling_properties)
     * [x] x-shift of the primal adds a linear function to dual, $h(x) = f(x-x_0) \implies h^*(g) = f^*(g) + g.x_0$ 
     * [x] y-shift of the primal adds the opposite to the dual, $h(x) = f(x) + y_0 \implies h^*(g) = f^*(g) - y_0$ 
-    * [x] adding a linear function to the primal causes an x-shift in the dual $h(x) = f(x)+g_0.x \implies h^*(g) = f^*(g - g_0)$
+    * [ ] adding a linear function to the primal causes an x-shift in the dual $h(x) = f(x)+g_0.x \implies h^*(g) = f^*(g - g_0)$
     * [ ] x-axis dilation of the primal causes x-contration in the dual $h(x) = f(a.x) \implies h^*(g) = f^*(g/a)$
     * [ ] y-axis dilation of the primal causes the same dilation in the dual, along with a contraction of the x-axis $h(x) = b.f(x) \implies h^*(g) = b.f^*(g/b)$
-* when I drag the frame (later stage) it automatically adapts the range of the function plotted. there is all these weird stuff happening at infinity.
-
 
 ### Other ideas
 * dual of a 2d shape (support function contour levels)
