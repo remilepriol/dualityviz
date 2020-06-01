@@ -82,22 +82,28 @@ def plot_conjugate(funcp, xx):
     primal_source = ColumnDataSource(
         data=dict(xx=xx, ff=ff, grad=grad, fcc=fcc,
                   idgopt=idgopt, gopt=gg[idgopt]))
+    # note to self : gopt is also the gradient of f**
     dual_source = ColumnDataSource(
         data=dict(gg=gg, fc=fc, idxopt=idxopt, xopt=xx[idxopt]))
     # for images it's a bit more complex.
     # each column has length 1.
     # The image itself is an element
     # along with coordinates and width
-    imagesdict = {
-        'g.x - f(x)': [gx - ff],
-        'g.x - f*(g)': [gx - fc[:, np.newaxis]],
-        'f(x)+f*(g)-g.x': [ff + fc[:, np.newaxis] - gx]
+    images_dict = {
+        'gxminusf': [gx - ff],
+        'gxminusfc': [gx - fc[:, np.newaxis]],
+        'youngs': [ff + fc[:, np.newaxis] - gx]
     }
     source2d = ColumnDataSource(data={
-        **imagesdict,
-        'x': [xx[0]], 'dw': [xx[-1] - xx[0]],
-        'y': [gg[0]], 'dh': [gg[-1] - gg[0]]
+        **images_dict,
+        'x0': [xx[0]], 'delta_x': [xx[-1] - xx[0]],
+        'g0': [gg[0]], 'delta_g': [gg[-1] - gg[0]]
     })
+    image_titles = {'gxminusf': 'g.x - f(x)',
+                    'gxminusfc': 'g.x - f*(g)',
+                    'youngs': 'f(x)+f*(g)-g.x'}
+    # cannot use formula strings in the source to satisfy JS
+    # when souce2d.data as argument to a callback
 
     # COLORS
     palette = palettes.Category10_10  # palettes.Colorblind7
@@ -165,11 +171,11 @@ def plot_conjugate(funcp, xx):
     fig3.line('xopt', 'gg', source=dual_source, line_width=3, color=dualcolor)
     fig3.line('xx', 'grad', source=primal_source, color=primalcolor, line_width=3)
 
-    # HEAT MAPS
+    # IMAGES
     images = [plotting.figure(**opts, x_axis_label='x', y_axis_label='g') for _ in range(3)]
-    for fig, name, colormap in zip(images, imagesdict, monochromemaps.values()):
-        fig.title.text = name
-        fig.image(image=name, x='x', dw='dw', y='y', dh='dh', alpha=.7,
+    for fig, name, colormap in zip(images, image_titles, monochromemaps.values()):
+        fig.title.text = image_titles[name]
+        fig.image(image=name, x='x0', dw='delta_x', y='g0', dh='delta_g', alpha=.7,
                   source=source2d, palette=colormap)
     lw = 2
     images[0].line('xx', 0, source=primal_source, color=primalcolor, line_width=lw)
@@ -213,95 +219,113 @@ def plot_conjugate(funcp, xx):
 
     slider_callback = CustomJS(
         args={
-            'xx': xx, 'ff': ff, 'gg': gg, 'fc': fc,
-            'primal': primal_source, 'dual': dual_source,
-            'source2d': source2d, **sliders_dict
+            **sliders_dict,
+            **primal_source.data, **dual_source.data, **source2d.data,
+            'primal': primal_source, 'dual': dual_source, 'source2d': source2d
         },
         code="""
-        let dx = x_shift.value;
-        f_shift.value
-        g_shift.value
-        x_dilate.value
-        f_dilate.value
+        const xs = x_shift.value;
+        const fs = f_shift.value;
+        const gs = g_shift.value;
+        const xd = x_dilate.value;
+        const fd = f_dilate.value;
+        
+        function xtransform(x){
+            return (x + xs)/xd
+        }
+        function gtransform(g){
+            return xd * fd * g + gs
+        }
+        
+        let new_xx = xx.map(xtransform);
+        let new_gg = gg.map(gtransform);
         
         for (let i=0; i<primal.data['xx'].length ;i++){
-            primal.data['xx'][i] += dx ;
+            primal.data['xx'][i] = new_xx[i];
+            primal.data['grad'][i] = gtransform(grad[i]);
+            primal.data['gopt'][i] = gtransform(gopt[i]);
+            primal.data['ff'][i] = fd * ff[i] + gs * primal.data['xx'][i]  + fs;
+            primal.data['fcc'][i] = fd * fcc[i] + gs * primal.data['xx'][i]  + fs;
         }
         primal.change.emit();
 
         for (let i=0; i<dual.data['gg'].length ;i++){
-            dual.data['fc'][i] += dual.data['gg'][i]*dx;
-            dual.data['xopt'][i] += dx;
+            dual.data['xopt'][i] = xtransform(xopt[i]) ;
+            dual.data['gg'][i] = new_gg[i];
+            dual.data['fc'][i] = fd*fc[i] + xs*fd*dual.data['gg'][i] - fs;
         }         
         dual.change.emit();
-
-        source2d.data['x'][0] += dx;
+        
+        source2d.data['x0'][0] = new_xx[0];
+        source2d.data['delta_x'][0] = new_xx[new_xx.length-1] - new_xx[0];
+        source2d.data['g0'][0] = new_gg[0];
+        source2d.data['delta_g'][0] = new_gg[new_gg.length-1] - new_gg[0];
         source2d.change.emit();
         """
     )
-    x_dilate_slider.js_on_change('value', CustomJS(
-        args=slider_args,
-        code="""
-        console.log(cb_obj,cb_obj.new,cb_obj.old,cb_obj.attr)
-        let previous_x_dilate = primal.data['xx'][1]/xx[1];
-        let dx = cb_obj.value / previous_x_dilate;
-        for (let i=0; i<primal.data['xx'].length ;i++){
-            primal.data['xx'][i] *= dx ;
-        }
-        primal.change.emit();
-
-        for (let i=0; i<dual.data['gg'].length ;i++){
-            dual.data['gg'][i] /= dx;
-            dual.data['xopt'][i] += dx;
-        }         
-        dual.change.emit();
-
-        source2d.data['x'][0] += dx;
-        source2d.change.emit();
-        """
-    ))
-    y_shift_slider.js_on_change('value', CustomJS(
-        args=slider_args,
-        code="""
-        let previous_y_shift = primal.data['ff'][0]-ff[0];
-        let dy = cb_obj.value - previous_y_shift;
-        for (let i=0; i<primal.data['xx'].length ;i++){
-            primal.data['ff'][i] += dy;
-            primal.data['fcc'][i] += dy;
-        }
-        primal.change.emit();
-
-        for (let i=0; i<dual.data['gg'].length ;i++){
-            dual.data['fc'][i] -= dy;
-        }         
-        dual.change.emit();
-        """
-    ))
-    g_shift_slider.js_on_change('value', CustomJS(
-        args=slider_args,
-        code="""
-        let previous_g_shift = dual.data['gg'][0]-gg[0];
-        let dg = cb_obj.value - previous_g_shift;
-        for (let i=0; i<primal.data['xx'].length ;i++){
-            primal.data['ff'][i] += dg * primal.data['xx'][i];
-            primal.data['fcc'][i] += dg * primal.data['xx'][i];
-            primal.data['grad'][i] += dg;
-            primal.data['gopt'][i] += dg;
-        }
-        primal.change.emit();
-
-        for (let i=0; i<dual.data['gg'].length ;i++){
-            dual.data['gg'][i] += dg;
-        }         
-        dual.change.emit();
-        
-        source2d.data['y'][0] += dg;
-        source2d.change.emit();
-        """
-    ))
-
-    for slider in sliders_dict:
+    for slider in sliders_dict.values():
         slider.js_on_change('value', slider_callback)
+
+    # x_dilate_slider.js_on_change('value', CustomJS(
+    #     args=slider_args,
+    #     code="""
+    #     console.log(cb_obj,cb_obj.new,cb_obj.old,cb_obj.attr)
+    #     let previous_x_dilate = primal.data['xx'][1]/xx[1];
+    #     let dx = cb_obj.value / previous_x_dilate;
+    #     for (let i=0; i<primal.data['xx'].length ;i++){
+    #         primal.data['xx'][i] *= dx ;
+    #     }
+    #     primal.change.emit();
+    #
+    #     for (let i=0; i<dual.data['gg'].length ;i++){
+    #         dual.data['gg'][i] /= dx;
+    #         dual.data['xopt'][i] += dx;
+    #     }
+    #     dual.change.emit();
+    #
+    #     source2d.data['x'][0] += dx;
+    #     source2d.change.emit();
+    #     """
+    # ))
+    # y_shift_slider.js_on_change('value', CustomJS(
+    #     args=slider_args,
+    #     code="""
+    #     let previous_y_shift = primal.data['ff'][0]-ff[0];
+    #     let dy = cb_obj.value - previous_y_shift;
+    #     for (let i=0; i<primal.data['xx'].length ;i++){
+    #         primal.data['ff'][i] += dy;
+    #         primal.data['fcc'][i] += dy;
+    #     }
+    #     primal.change.emit();
+    #
+    #     for (let i=0; i<dual.data['gg'].length ;i++){
+    #         dual.data['fc'][i] -= dy;
+    #     }
+    #     dual.change.emit();
+    #     """
+    # ))
+    # g_shift_slider.js_on_change('value', CustomJS(
+    #     args=slider_args,
+    #     code="""
+    #     let previous_g_shift = dual.data['gg'][0]-gg[0];
+    #     let dg = cb_obj.value - previous_g_shift;
+    #     for (let i=0; i<primal.data['xx'].length ;i++){
+    #         primal.data['ff'][i] += dg * primal.data['xx'][i];
+    #         primal.data['fcc'][i] += dg * primal.data['xx'][i];
+    #         primal.data['grad'][i] += dg;
+    #         primal.data['gopt'][i] += dg;
+    #     }
+    #     primal.change.emit();
+    #
+    #     for (let i=0; i<dual.data['gg'].length ;i++){
+    #         dual.data['gg'][i] += dg;
+    #     }
+    #     dual.change.emit();
+    #
+    #     source2d.data['y'][0] += dg;
+    #     source2d.change.emit();
+    #     """
+    # ))
 
     # HOVERING
     hover_source_dict = {
@@ -424,8 +448,9 @@ def plot_conjugate(funcp, xx):
         fig.js_on_event(bokeh.events.MouseLeave, jsleave)
 
     # bigfig = layouts.gridplot([[fig1,fig2,fig3]], toolbar_location='')
-    bigfig = layouts.gridplot([[x_dilate_slider, None, None],
-                               [x_shift_slider, y_shift_slider, g_shift_slider],
-                               [fig1, fig2, fig3],
-                               images], toolbar_location=None)
+    bigfig = layouts.gridplot([
+        [sliders_dict['x_shift'], sliders_dict['f_shift'], sliders_dict['g_shift']],
+        [sliders_dict['x_dilate'], sliders_dict['f_dilate'], None],
+        [fig1, fig2, fig3], images,
+    ], toolbar_location=None)
     return bigfig
