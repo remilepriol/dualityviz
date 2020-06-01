@@ -41,7 +41,7 @@ figlist = []
 for name, (func, inf, sup) in functiondict.items():
     figlist += [layouts.column(
         models.Div(text=f'<h2>{name}</h2>'),
-        plot_conjugate(func, np.linspace(inf, sup, 100))
+        plot_conjugate(func, np.linspace(inf, sup, 200))
     )]
     break
 

@@ -79,12 +79,15 @@ def plot_conjugate(funcp, xx):
     #########
     # a source is made of columns with equal lengths
     # all the primal and dual ingredients go to their respective source
-    primal_source = ColumnDataSource(
-        data=dict(xx=xx, ff=ff, grad=grad, fcc=fcc,
-                  idgopt=idgopt, gopt=gg[idgopt]))
+    primal_source = ColumnDataSource(data=dict(
+        xx=xx, ff=ff, grad=grad, fcc=fcc,
+        idgopt=idgopt, gopt=gg[idgopt], gzeros=np.zeros_like(xx)
+    ))
     # note to self : gopt is also the gradient of f**
-    dual_source = ColumnDataSource(
-        data=dict(gg=gg, fc=fc, idxopt=idxopt, xopt=xx[idxopt]))
+    dual_source = ColumnDataSource(data=dict(
+        gg=gg, fc=fc, idxopt=idxopt,
+        xopt=xx[idxopt], xzeros=np.zeros_like(gg)
+    ))
     # for images it's a bit more complex.
     # each column has length 1.
     # The image itself is an element
@@ -119,12 +122,12 @@ def plot_conjugate(funcp, xx):
     # GLYPHS
     ########
     # global options for the figures
-    pixelsize = 250
+    pixelsize = 300
     opts = dict(plot_width=pixelsize, plot_height=pixelsize)
-    # tools='pan,wheel_zoom',active_scroll='wheel_zoom')
 
     # plot the primal function
     fig1 = plotting.figure(title='Primal f(x)', **opts,
+                           tools='pan,wheel_zoom', active_scroll='wheel_zoom',
                            x_axis_label='x', y_axis_label='y')
     set_range(fig1, xx, ff)
 
@@ -143,6 +146,7 @@ def plot_conjugate(funcp, xx):
 
     # plot the conjugate function
     fig2 = plotting.figure(title='Dual f*(g)', **opts,
+                           tools='pan,wheel_zoom', active_scroll='wheel_zoom',
                            x_axis_label='g', y_axis_label='y')
     set_range(fig2, gg, fc)
     fig2.line('gg', 'fc', source=dual_source, line_width=3, color=dualcolor)
@@ -178,24 +182,28 @@ def plot_conjugate(funcp, xx):
         fig.image(image=name, x='x0', dw='delta_x', y='g0', dh='delta_g', alpha=.7,
                   source=source2d, palette=colormap)
     lw = 2
-    images[0].line('xx', 0, source=primal_source, color=primalcolor, line_width=lw)
+    images[0].line('xx', 'gzeros', source=primal_source, color=primalcolor, line_width=lw)
     images[0].line('xopt', 'gg', source=dual_source, color=dualcolor, line_width=lw)
 
-    images[1].line(0, 'gg', source=dual_source, color=dualcolor, line_width=lw)
+    images[1].line('xzeros', 'gg', source=dual_source, color=dualcolor, line_width=lw)
     images[1].line('xx', 'gopt', source=primal_source,
                    color=primalcolor if is_f_convex else envelopecolor, line_width=lw)
 
-    gxpoint_source = ColumnDataSource(data=dict(x=[], g=[]))
-    gxline_source = ColumnDataSource(data=dict(x=[], g=[]))
-    for fig in [fig3] + images:
-        fig.circle(x='x', y='g', size=10, color=tangentcolor, alpha=.6, source=gxpoint_source)
-        fig.line(x='x', y='g', line_width=lw, line_color=tangentcolor, source=gxline_source)
+    # temporary hover glyphs
+    gxcircle = models.Circle(x='x', y='g', size=10, fill_color=tangentcolor, line_color=tangentcolor, fill_alpha=.7)
+    gxline = models.Line(x='x', y='g', line_width=lw, line_color=tangentcolor)
+
+    hline = images[0].add_glyph(ColumnDataSource(data=dict(x=[], g=[])), gxline)
+    hpoint = images[0].add_glyph(ColumnDataSource(data=dict(x=[], g=[])), gxcircle)
+    vline = images[1].add_glyph(ColumnDataSource(data=dict(x=[], g=[])), gxline)
+    vpoint = images[1].add_glyph(ColumnDataSource(data=dict(x=[], g=[])), gxcircle)
+    fig3.add_glyph(hpoint.data_source, gxcircle)
+    fig3.add_glyph(vpoint.data_source, gxcircle)
 
     ##############
     # INTERACTIONS
     ##############
-    # SLIDERS
-    # Scaling the primal with 5 sliders
+    # SLIDERS:  Scaling the primal with 5 sliders
     deltax = (max(xx) - min(xx))
     deltay = (max(ff) - min(ff))
     deltag = (max(gg) - min(gg))
@@ -242,6 +250,7 @@ def plot_conjugate(funcp, xx):
         
         for (let i=0; i<primal.data['xx'].length ;i++){
             primal.data['xx'][i] = new_xx[i];
+            primal.data['gzeros'][i] = gtransform(0);
             primal.data['grad'][i] = gtransform(grad[i]);
             primal.data['gopt'][i] = gtransform(gopt[i]);
             primal.data['ff'][i] = fd * ff[i] + gs * primal.data['xx'][i]  + fs;
@@ -250,6 +259,7 @@ def plot_conjugate(funcp, xx):
         primal.change.emit();
 
         for (let i=0; i<dual.data['gg'].length ;i++){
+            dual.data['xzeros'][i] = xtransform(0);
             dual.data['xopt'][i] = xtransform(xopt[i]) ;
             dual.data['gg'][i] = new_gg[i];
             dual.data['fc'][i] = fd*fc[i] + xs*fd*dual.data['gg'][i] - fs;
@@ -274,8 +284,10 @@ def plot_conjugate(funcp, xx):
         'dualpoint': dualpoint.data_source,
         'dualtangent': dualtangent.data_source,
         'dualheight': dualheight.data_source,
-        'gxpoint': gxpoint_source,
-        'gxline': gxline_source
+        'hpoint': hpoint.data_source,
+        'vpoint': vpoint.data_source,
+        'hline': hline.data_source,
+        'vline': vline.data_source,
     }
 
     source_dict = {
@@ -317,13 +329,13 @@ def plot_conjugate(funcp, xx):
         dualtangent.data['y'] = dualtangent.data['g'].map(g => fc1 + x1*(g-g1));
         dualtangent.change.emit();
 
-        gxpoint.data['x'] = [x1];
-        gxpoint.data['g'] = [g1];
-        gxpoint.change.emit();   
+        vpoint.data['x'] = [x1];
+        vpoint.data['g'] = [g1];
+        vpoint.change.emit();   
              
-        gxline.data['x'] = [x1, x1];
-        gxline.data['g'] = [gg[0], gg[gg.length - 1]];
-        gxline.change.emit();
+        vline.data['x'] = [x1, x1];
+        vline.data['g'] = [gg[0], gg[gg.length - 1]];
+        vline.change.emit();
         """
     ))
 
@@ -361,13 +373,13 @@ def plot_conjugate(funcp, xx):
         primalheight.data['y'] = [0,y1 - g1*x1];
         primalheight.change.emit();
 
-        gxpoint.data['x'] = [x1];
-        gxpoint.data['g'] = [g1];
-        gxpoint.change.emit();        
+        hpoint.data['x'] = [x1];
+        hpoint.data['g'] = [g1];
+        hpoint.change.emit();        
         
-        gxline.data['x'] = [xx[0], xx[xx.length - 1]];
-        gxline.data['g'] = [g1, g1];
-        gxline.change.emit();
+        hline.data['x'] = [xx[0], xx[xx.length - 1]];
+        hline.data['g'] = [g1, g1];
+        hline.change.emit();
         """
     ))
 
@@ -386,10 +398,11 @@ def plot_conjugate(funcp, xx):
     for fig in [fig1, fig2, fig3] + images:
         fig.js_on_event(bokeh.events.MouseLeave, jsleave)
 
-    # bigfig = layouts.gridplot([[fig1,fig2,fig3]], toolbar_location='')
     bigfig = layouts.gridplot([
-        [sliders_dict['x_shift'], sliders_dict['f_shift'], sliders_dict['g_shift']],
-        [sliders_dict['x_dilate'], sliders_dict['f_dilate'], None],
+        # TODO debug the messy slider formulas
+        # [sliders_dict['x_shift'], sliders_dict['f_shift'], sliders_dict['g_shift']],
+        # [sliders_dict['x_dilate'], sliders_dict['f_dilate'], None],
+        [sliders_dict['x_shift'], sliders_dict['f_shift'], None],
         [fig1, fig2, fig3], images,
     ], toolbar_location=None)
     return bigfig
