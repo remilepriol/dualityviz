@@ -1,4 +1,13 @@
-## Plot convex conjugates
+# Convex Duality Viz
+
+## How to run
+
+Dependencies are python 3 and `numpy, matplotlib, bokeh`. 
+To reproduce the plots contained in `conjugate.html`, run
+`python main.py`. 
+
+
+## Roadmap
 
 I want to create an interactive visualization of convex duality. 
 Matplotlib does not support well interactive functionalities, and I want this visualization to be accessible to anyone in their browser.
