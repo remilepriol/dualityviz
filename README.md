@@ -1,6 +1,6 @@
 # Convex Duality Viz
 
-A demo is available at <https://remilepriol.github.io/conjugate> 
+A demo is available at <https://remilepriol.github.io/research/conjugate> 
 
 ## How to run
 
