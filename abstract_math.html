@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>abstract</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<h1 id="toc_0">Visualizing the Convex Conjugate</h1>
+
+<p>Given a function f from real numbers to real numbers, its Legendre-Fenchel transformation is defined by the formula \[f^*(g) = \max_x g.x - f(x) \; .\] This transformation is a ubiquitous concept throughout Science. It appears in thermodynamics and classical mechanics as the Legendre transform (a special case), in convex optimization and machine learning as the Fenchel conjugate or the convex conjugate. At first sight this definition seems arbitrary, but it admits geometrical interpretations along with many properties that make it a useful tool. Among others, it offers a generalization of Lagrangian duality.</p>
+
+<p>Unfortunately understanding these properties typically require newcomers to assimilate numerous formulas. So far I have found no widely accessible visualization to help one gain an intuitive knowledge of this transformation. I tried to fill this gap with an interactive visualization that runs in the browser. I programmed it with a combination of the open source Python library Bokeh and custom JavaScript callbacks.</p>
+
+<p>This code takes a real function \(f\) defined on a certain range \([x_0,x_1]\), and defined to be plus infinity \(+\infty\) outside this range. (I know it sounds exotic but it is a convention in convex analysis.) The code displays 6 functions defined over three dimensions: the \(X, G \) and  \(Y\) spaces. Note that \(G\) stands for &lsquo;gradient&rsquo; because of the higher dimensional generalization.</p>
+
+<h2 id="toc_1">6 plots</h2>
+
+<ul>
+<li>The upper left axis shows the function \(f: X \rightarrow Y \) along with its convex envelope if \(f\) is not convex. Note that the convex envelope is equal to the  bi-conjugate \(f^{**}\).</li>
+<li>The upper central axis, shows the conjugate \(f^*: G \rightarrow Y .\)</li>
+<li>The upper right axis shows the (sub)differential of \(f\), \( \partial f: X \rightarrow G\), along with \( \partial f^*: G \rightarrow X \).
+    Be cautious that this notation hides the fact that subdifferentials take interval values.
+    <ul>
+    <li>If \(f\) is strictly convex and differentiable then these two are monotonous, bijective and reciprocal mappings: \( f^*{'}( f{'}(x))=x \) and \( f{'}( f^*{'}(g))=g \). This is the special case of the Legendre transform : to get \(f^*\), differentiate \(f\), take the reciprocal and integrate.</li>
+    <li>In general
+        \[ \partial f^*(g) = \hat x(g) := \arg\max_x x.g - f(x) \]
+        \[ \partial f^{**}(x) = \hat g(x) := \arg\max_g x.g - f^*(g) \]
+        where equalities are between sets.</li>
+    </ul></li>
+<li>The lower row shows mappings from the \( (X, G) \) plane to \(Y\).
+    <ul>
+    <li>The left axis shows the landscape used to build \(f^*\). Slicing this landscape along the blue line gives \(-f\) and the orange line gives \(f^*\).</li>
+    <li>The central axis shows the landscape to build \(f\). Slicing along the orange line gives \(-f^*\) and the blue (or green) line gives \(f^{**}\).</li>
+    <li>The right axis shows Young&rsquo;s duality gap \(f(x) + f*(g) - x.g\) which is  non-negative by definition of \(f^*\) and zero iff \( (x,g) \) verifies
+        \(x = \hat x(g) \) or \( g=\hat g(x)\; . \)</li>
+    </ul></li>
+</ul>
+
+<h2 id="toc_2">Interactivity</h2>
+
+<p><strong>Hovering</strong> over the dual plot shows how \(f^*\) is built via \( f^*(g) = \max_x g.x - f(x) = \max_x g.x - f^{**}(x)\), highlighting a primal point \( (\hat x(g), f(\hat x(g))) \) which achieves this max. A similar behavior is encoded in the primal plot, building \(f^{**}) \) from \(f^*\). Hovering over \( (X,G)\rightarrow Y \) plots also reveal the building process along with the duality gap.</p>
+
+<p><strong>Sliders</strong> illustrate the scaling properties of \(f \) and \(f^*\).</p>
+
+<p>I hope you will be able to figure out the meaning of all plot elements by playing with them.</p>
+
+<link href="conjugate.html" rel="import" />
+
+<div>PLOTSHOLDER</div>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.0.2.min.js"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.0.2.min.js"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.0.2.min.js"
+        crossorigin="anonymous"></script>
+
+<div>SCRIPTHOLDER</div>
+
+</body>
+
+</html>
