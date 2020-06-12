@@ -61,7 +61,7 @@ with open('abstract_math.html','r') as fin:
 
 newhtmlstring = htmlstring.replace("<div>PLOTSHOLDER</div>", div).replace("<div>SCRIPTHOLDER</div>", script)
 
-with open("conjugate.html","w") as fout:
+with open("index.html","w") as fout:
     fout.write(newhtmlstring)
 
 # bokeh.io.save(finalplot, title='conjugates', filename='conjugate.html', )
