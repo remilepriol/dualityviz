@@ -199,6 +199,9 @@ def plot_conjugate(funcp, xx):
     images[1].line('xx', 'gopt', source=primal_source,
                    color=primalcolor if is_f_convex else envelopecolor, line_width=lw)
 
+    images[2].line('xx', 'gzeros', source=primal_source, color=primalcolor, line_width=lw)
+    images[2].line('xzeros', 'gg', source=dual_source, color=dualcolor, line_width=lw)
+
     # temporary hover glyphs
     gxcircle = models.Circle(x='x', y='g', size=10, fill_color=tangentcolor,
                              line_color=tangentcolor, fill_alpha=.7)
