@@ -28,9 +28,9 @@ bokeh.io.output_file(filename='conjugate.html', title='conjugate')
 np.random.seed(0)
 functiondict = {
     'absolute value': (np.abs, -1, 1),
-    'x**4': (lambda x: x ** 4, -1, 1),
-    'x**4 + 4 x**3': (lambda x: x ** 4 + 4 * x ** 3, -1, 1),
-    'x**2 - cos(2 x)': (lambda x: x ** 2 - np.cos(2 * x), -5, 5),
+    'x^4': (lambda x: x ** 4, -1, 1),
+    'x^4 + 4 x^3': (lambda x: x ** 4 + 4 * x ** 3, -1, 1),
+    'x^2 - cos(2 x)': (lambda x: x ** 2 - np.cos(2 * x), -5, 5),
     # 'sin(x)': (np.sin, -np.pi, 0),
     # 'Entropy(x) = x log(x) + (1-x) log(1-x)': (entropy, 0, 1),
     # 'x sin(1/x)': (lambda x: x * np.sin(1 / x), -1, 1),
@@ -47,8 +47,9 @@ functiondict = {
 
 figlist = []
 for name, (func, inf, sup) in functiondict.items():
+    subfigtitle = f"{name} on ({inf}, {sup})"
     figlist += [layouts.column(
-        models.Div(text=f'<h2>{name}</h2>'),
+        models.Div(text=f'<h2>{subfigtitle}</h2>'),
         plot_conjugate(func, np.linspace(inf, sup, 150))
     )]
 finalplot = layouts.column(figlist)
