@@ -255,7 +255,7 @@ def plot_conjugate(funcp, xx):
             const fd = f_dilate.value;
             
             function xtransform(x){
-                return (x + xs)/xd
+                return x/xd + xs
             }
             function gtransform(g){
                 return xd * fd * g + gs
@@ -269,8 +269,8 @@ def plot_conjugate(funcp, xx):
                 primal.data['gzeros'][i] = gtransform(0);
                 primal.data['grad'][i] = gtransform(grad[i]);
                 primal.data['gopt'][i] = gtransform(gopt[i]);
-                primal.data['ff'][i] = fd * ff[i] + gs * xx[i]  + fs;
-                primal.data['fcc'][i] = fd * fcc[i] + gs * xx[i]  + fs;
+                primal.data['ff'][i] = fd * ff[i] + gs * (new_xx[i]-xs)  + fs;
+                primal.data['fcc'][i] = fd * fcc[i] + gs * (new_xx[i]-xs)  + fs;
             }
             primal.change.emit();
     
@@ -278,7 +278,7 @@ def plot_conjugate(funcp, xx):
                 dual.data['xzeros'][i] = xtransform(0);
                 dual.data['xopt'][i] = xtransform(xopt[i]) ;
                 dual.data['gg'][i] = new_gg[i];
-                dual.data['fc'][i] = fd*fc[i] + xs*fd*dual.data['gg'][i] - fs;
+                dual.data['fc'][i] = fd*fc[i] + xs * new_gg[i] - fs;
             }         
             dual.change.emit();
             
@@ -466,8 +466,8 @@ def plot_conjugate(funcp, xx):
     # hover over g.x-f*(g)
     for event in hover_events:
         images[1].js_on_event(event, CustomJS(
-        args=source_dict,
-        code=code_get_xg + """
+            args=source_dict,
+            code=code_get_xg + """
             vpoint.data['x'] = [x1];
             vpoint.data['g'] = [g1];
             vpoint.change.emit();   
@@ -492,7 +492,7 @@ def plot_conjugate(funcp, xx):
             primalgap.data['y'] = [g1*x1-fc1, y1];
             primalgap.change.emit();
             """
-    ))
+        ))
 
     # Remove all temporary glyphs on MouseLeave
     jsleave = CustomJS(
@@ -511,9 +511,10 @@ def plot_conjugate(funcp, xx):
 
     bigfig = layouts.gridplot([
         # TODO debug the messy slider formulas
-        # [sliders_dict['x_shift'], sliders_dict['f_shift'], sliders_dict['g_shift']],
-        # [sliders_dict['x_dilate'], sliders_dict['f_dilate'], None],
-        [sliders_dict['x_shift'], sliders_dict['f_shift'], None],
-        [fig1, fig2, fig3], images,
+        [sliders_dict['x_shift'], sliders_dict['f_shift'], sliders_dict['g_shift']],
+        [sliders_dict['x_dilate'], sliders_dict['f_dilate'], None],
+        # [sliders_dict['x_shift'], sliders_dict['f_shift'], None],
+        [fig1, fig2, fig3],
+        images,
     ], toolbar_location=None)
     return bigfig
