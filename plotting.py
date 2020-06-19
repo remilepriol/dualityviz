@@ -510,11 +510,10 @@ def plot_conjugate(funcp, xx):
         fig.js_on_event(bokeh.events.MouseLeave, jsleave)
 
     bigfig = layouts.gridplot([
-        # TODO debug the messy slider formulas
+        [fig1, fig2, fig3],
+        images,
         [sliders_dict['x_shift'], sliders_dict['f_shift'], sliders_dict['g_shift']],
         [sliders_dict['x_dilate'], sliders_dict['f_dilate'], None],
         # [sliders_dict['x_shift'], sliders_dict['f_shift'], None],
-        [fig1, fig2, fig3],
-        images,
     ], toolbar_location=None)
     return bigfig
