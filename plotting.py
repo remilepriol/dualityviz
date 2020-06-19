@@ -315,7 +315,7 @@ def plot_conjugate(funcp, xx):
     }
 
     # hover over primal plot
-    fig1.js_on_event(bokeh.events.MouseMove, CustomJS(
+    primalhoverjs = CustomJS(
         args=source_dict,
         code="""
             let x0 = cb_obj.x;
@@ -356,10 +356,12 @@ def plot_conjugate(funcp, xx):
             vline.data['g'] = [gg[0], gg[gg.length - 1]];
             vline.change.emit();
             """
-    ))
+    )
+    fig1.js_on_event(bokeh.events.MouseMove, primalhoverjs)
+    fig1.js_on_event(bokeh.events.Tap, primalhoverjs)
 
     # hover over dual plot
-    fig2.js_on_event(bokeh.events.MouseMove, CustomJS(
+    dualhoverjs = CustomJS(
         args=source_dict,
         code="""
             let g0 = cb_obj.x;
@@ -400,8 +402,11 @@ def plot_conjugate(funcp, xx):
             hline.data['g'] = [g1, g1];
             hline.change.emit();
             """
-    ))
+    )
+    fig2.js_on_event(bokeh.events.MouseMove, dualhoverjs)
+    fig2.js_on_event(bokeh.events.Tap, dualhoverjs)
 
+    # Hover over X,G plots
     code_get_xg = """
         let x0 = cb_obj.x;
         let g0 = cb_obj.y;
@@ -425,10 +430,13 @@ def plot_conjugate(funcp, xx):
         dualpoint.change.emit();
         """
 
+    hover_events = [bokeh.events.MouseMove, bokeh.events.Tap]
+
     # hover over g.x-f(x)
-    images[0].js_on_event(bokeh.events.MouseMove, CustomJS(
-        args=source_dict,
-        code=code_get_xg + """
+    for event in hover_events:
+        images[0].js_on_event(event, CustomJS(
+            args=source_dict,
+            code=code_get_xg + """
             hpoint.data['x'] = [x1];
             hpoint.data['g'] = [g1];
             hpoint.change.emit();        
@@ -453,10 +461,11 @@ def plot_conjugate(funcp, xx):
             dualgap.data['y'] = [g1*x1-y1, fc1];
             dualgap.change.emit();
             """
-    ))
+        ))
 
     # hover over g.x-f*(g)
-    images[1].js_on_event(bokeh.events.MouseMove, CustomJS(
+    for event in hover_events:
+        images[1].js_on_event(event, CustomJS(
         args=source_dict,
         code=code_get_xg + """
             vpoint.data['x'] = [x1];

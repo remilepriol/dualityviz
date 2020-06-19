@@ -48,6 +48,10 @@ The simpler alternative on which I focus here is Bokeh, a python library which l
     * [ ] adding a linear function to the primal causes an x-shift in the dual $h(x) = f(x)+g_0.x \implies h^*(g) = f^*(g - g_0)$
     * [ ] x-axis dilation of the primal causes x-contration in the dual $h(x) = f(a.x) \implies h^*(g) = f^*(g/a)$
     * [ ] y-axis dilation of the primal causes the same dilation in the dual, along with a contraction of the x-axis $h(x) = b.f(x) \implies h^*(g) = b.f^*(g/b)$
+    
+* small TODO
+    * [ ] add legend describing f(x) and g.x on every plots (ideally this legend would appear when I hover)
+    * [ ] move tangent to a linea from the origin, or use both.
 
 ### Other ideas
 * dual of a 2d shape (support function contour levels)
