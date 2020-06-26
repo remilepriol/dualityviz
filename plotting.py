@@ -296,8 +296,8 @@ def plot_conjugate(funcp, xx):
 
     # HOVERING
     hover_source_dict = {
-        'tangent': primaltangent.data_source,
-        'point': primalpoint.data_source,
+        'primaltangent': primaltangent.data_source,
+        'primalpoint': primalpoint.data_source,
         'primalheight': primalheight.data_source,
         'primalgap': primalgap.data_source,
         'dualpoint': dualpoint.data_source,
@@ -326,9 +326,9 @@ def plot_conjugate(funcp, xx):
             if (i==-1){i = xx.length-1};
             let x1 = xx[i];
             let y1 = primal.data['fcc'][i];
-            point.data['x'] = [x1];
-            point.data['y'] = [y1];
-            point.change.emit();
+            primalpoint.data['x'] = [x1];
+            primalpoint.data['y'] = [y1];
+            primalpoint.change.emit();
     
             let j = primal.data['idgopt'][i];
             let gg = dual.data['gg'];
@@ -384,13 +384,13 @@ def plot_conjugate(funcp, xx):
             let xx = primal.data['xx'];
             let x1 = xx[i];
             let y1 = primal.data['ff'][i];        
-            point.data['x'] = [x1];
-            point.data['y'] = [y1];
-            point.change.emit();
+            primalpoint.data['x'] = [x1];
+            primalpoint.data['y'] = [y1];
+            primalpoint.change.emit();
     
-            tangent.data['x'] = [xx[0]-1000, xx[xx.length-1]+1000];
-            tangent.data['y'] = tangent.data['x'].map(x => g1*(x-x1) + y1);
-            tangent.change.emit();
+            primaltangent.data['x'] = [xx[0]-1000, xx[xx.length-1]+1000];
+            primaltangent.data['y'] = primaltangent.data['x'].map(x => g1*(x-x1) + y1);
+            primaltangent.change.emit();
     
             primalheight.data['x'] = [0,0];
             primalheight.data['y'] = [0,y1 - g1*x1];
@@ -419,9 +419,9 @@ def plot_conjugate(funcp, xx):
         if (i==-1){i = xx.length-1};
         let x1 = xx[i];
         let y1 = primal.data['ff'][i];
-        point.data['x'] = [x1];
-        point.data['y'] = [y1];
-        point.change.emit();
+        primalpoint.data['x'] = [x1];
+        primalpoint.data['y'] = [y1];
+        primalpoint.change.emit();
         
         let j = gg.findIndex(g => g >=g0);
         if (j==-1){j = gg.length-1};
@@ -447,9 +447,9 @@ def plot_conjugate(funcp, xx):
             hline.data['g'] = [g1, g1];
             hline.change.emit();
             
-            tangent.data['x'] = [xx[0]-1000, xx[xx.length-1]+1000];
-            tangent.data['y'] = tangent.data['x'].map(x => g1*(x-x1) + y1);
-            tangent.change.emit();
+            primaltangent.data['x'] = [xx[0]-1000, xx[xx.length-1]+1000];
+            primaltangent.data['y'] = primaltangent.data['x'].map(x => g1*(x-x1) + y1);
+            primaltangent.change.emit();
     
             primalheight.data['x'] = [0,0];
             primalheight.data['y'] = [0,y1 - g1*x1];
