@@ -71,7 +71,7 @@ def legendre(funcp, xrange):
 # import numeric.js
 # https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js
 
-def plot_conjugate(funcp, xx, pixelsize = 350):
+def plot_conjugate(funcp, xx, pixelsize=350):
     xx, ff, grad, fcc, fccgrad, idgopt, gg, fc, idxopt, gx, is_f_convex = legendre(funcp, xx)
 
     #########
@@ -110,11 +110,11 @@ def plot_conjugate(funcp, xx, pixelsize = 350):
     palette = palettes.Category10_10  # palettes.Colorblind7
     primalcolor = palette[0]  # blue
     dualcolor = palette[1]  # orange
-    envelopecolor = palette[2]
-    tangentcolor = palette[3]
-    heightcolor = palette[4]
+    gapcolor = palette[2]  # green
+    tangentcolor = palette[3]  # red
+    heightcolor = palette[4]  # purple
 
-    monochromemaps = colormap2hexpalette(['Purples', 'Purples', 'Greys'])
+    monochromemaps = colormap2hexpalette(['Purples', 'Purples', 'Greens'])
 
     ########
     # GLYPHS
@@ -129,7 +129,7 @@ def plot_conjugate(funcp, xx, pixelsize = 350):
     set_range(fig1, xx, ff)
 
     if not is_f_convex:
-        fig1.line('xx', 'fcc', source=primal_source, line_width=3, color=envelopecolor)
+        fig1.line('xx', 'fcc', source=primal_source, line_width=3, color=primalcolor, alpha=.5)
     fig1.line('xx', 'ff', source=primal_source, line_width=3, color=primalcolor)
 
     primalpoint = fig1.circle('x', 'y', size=10, color=tangentcolor,
@@ -138,9 +138,9 @@ def plot_conjugate(funcp, xx, pixelsize = 350):
                               source=ColumnDataSource(dict(x=[], y=[])))
     primaldroite = fig1.line('x', 'y', line_width=2, color='black',
                              source=ColumnDataSource(dict(x=[], y=[])))
-    primalheight = fig1.line('x', 'y', line_width=3, color=heightcolor,
+    primalheight = fig1.line('x', 'y', line_width=3, color=heightcolor, line_cap='round',
                              source=ColumnDataSource(dict(x=[], y=[])))
-    primalgap = fig1.line('x', 'y', line_width=2, color='grey', alpha=.8,
+    primalgap = fig1.line('x', 'y', line_width=3, color=gapcolor, line_dash='dotted',
                           source=ColumnDataSource(dict(x=[], y=[])))
 
     # plot the conjugate function
@@ -155,9 +155,9 @@ def plot_conjugate(funcp, xx, pixelsize = 350):
                             source=ColumnDataSource(dict(g=[], y=[])))
     dualdroite = fig2.line('g', 'y', line_width=2, color='black',
                            source=ColumnDataSource(dict(g=[], y=[])))
-    dualheight = fig2.line('g', 'y', line_width=3, color=heightcolor,
+    dualheight = fig2.line('g', 'y', line_width=3, color=heightcolor, line_cap='round',
                            source=ColumnDataSource(dict(g=[], y=[])))
-    dualgap = fig2.line('g', 'y', line_width=2, color='grey', alpha=.8,
+    dualgap = fig2.line('g', 'y', line_width=3, color=gapcolor, line_dash='dotted',
                         source=ColumnDataSource(dict(g=[], y=[])))
 
     # highlight lines x=0 and y=0 in primal and dual plots
@@ -194,7 +194,7 @@ def plot_conjugate(funcp, xx, pixelsize = 350):
     images[1].line('xzeros', 'gg', source=dual_source, color=dualcolor, line_width=lw,
                    legend_label='-f*(g)')
     images[1].line('xx', 'gopt', source=primal_source,
-                   color=primalcolor if is_f_convex else envelopecolor, line_width=lw,
+                   color=primalcolor, line_width=lw,
                    legend_label='f(x)')
 
     images[2].line('xx', 'gzeros', source=primal_source, color=primalcolor, line_width=lw,
