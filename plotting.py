@@ -466,11 +466,11 @@ def plot_conjugate(funcp, xx, pixelsize = 350):
             hline.change.emit();
             
             primaltangent.data['x'] = [xx[0]-1000, xx[xx.length-1]+1000];
-            primaltangent.data['y'] = primaltangent.data['x'].map(x => g1*(x-x1) + ff1);
+            primaltangent.data['y'] = primaltangent.data['x'].map(x => g1*x);
             primaltangent.change.emit();
     
-            primalheight.data['x'] = [0,0];
-            primalheight.data['y'] = [0,ff1 - g1*x1];
+            primalheight.data['x'] = [x1,x1];
+            primalheight.data['y'] = [g1*x1, ff1];
             primalheight.change.emit();
             
             dualheight.data['g'] = [g1, g1];
@@ -497,11 +497,11 @@ def plot_conjugate(funcp, xx, pixelsize = 350):
             vline.change.emit();
             
             dualtangent.data['g'] = [gg[0]-1000, gg[gg.length-1]+1000];
-            dualtangent.data['y'] = dualtangent.data['g'].map(g => fc1 + x1*(g-g1));
+            dualtangent.data['y'] = dualtangent.data['g'].map(g => x1*g);
             dualtangent.change.emit();
             
-            dualheight.data['g'] = [0,0];
-            dualheight.data['y'] = [0,fc1 - g1*x1];
+            dualheight.data['g'] = [g1,g1];
+            dualheight.data['y'] = [fc1, g1*x1];
             dualheight.change.emit();
     
             primalheight.data['x'] = [x1, x1];
