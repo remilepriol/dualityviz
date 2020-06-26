@@ -225,6 +225,15 @@ def plot_conjugate(funcp, xx, pixelsize=350):
     ##############
     # INTERACTIONS
     ##############
+    # INPUT FUNCTION
+    # very complicated without going full blown JS
+    inputfunc = bokeh.models.TextInput(title='f(x)=', value='x^4')
+    inputfunc.js_on_change('value', CustomJS(
+        args={},
+        code="""
+            math.eval(cb_obj.value,x)
+        """))
+
     # SLIDERS:  Scaling the primal with 5 sliders
     deltax = (max(xx) - min(xx)) + .1
     deltay = (max(ff) - min(ff)) + .1
