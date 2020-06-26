@@ -31,6 +31,7 @@ functiondict = {
     'x^4': (lambda x: x ** 4, -1, 1),
     'x^4 + 4 x^3': (lambda x: x ** 4 + 4 * x ** 3, -1, 1),
     'x^2 - cos(2 x)': (lambda x: x ** 2 - np.cos(2 * x), -5, 5),
+    #
     # 'sin(x)': (np.sin, -np.pi, 0),
     # 'Entropy(x) = x log(x) + (1-x) log(1-x)': (entropy, 0, 1),
     # 'x sin(1/x)': (lambda x: x * np.sin(1 / x), -1, 1),
@@ -59,7 +60,7 @@ script, div = embed.components(finalplot)
 with open('abstract_math.html','r') as fin:
     htmlstring = fin.read()
 
-newhtmlstring = htmlstring.replace("<div>PLOTSHOLDER</div>", div).replace("<div>SCRIPTHOLDER</div>", script)
+newhtmlstring = htmlstring.replace("PLOTSHOLDER", div).replace("<div>SCRIPTHOLDER</div>", script)
 
 with open("index.html","w") as fout:
     fout.write(newhtmlstring)

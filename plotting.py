@@ -71,7 +71,7 @@ def legendre(funcp, xrange):
 # import numeric.js
 # https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js
 
-def plot_conjugate(funcp, xx):
+def plot_conjugate(funcp, xx, pixelsize = 350):
     xx, ff, grad, fcc, fccgrad, idgopt, gg, fc, idxopt, gx, is_f_convex = legendre(funcp, xx)
 
     #########
@@ -120,7 +120,6 @@ def plot_conjugate(funcp, xx):
     # GLYPHS
     ########
     # global options for the figures
-    pixelsize = 300
     opts = dict(plot_width=pixelsize, plot_height=pixelsize)
 
     # plot the primal function
@@ -202,9 +201,12 @@ def plot_conjugate(funcp, xx):
                    legend_label='f(x)')
     images[2].line('xzeros', 'gg', source=dual_source, color=dualcolor, line_width=lw,
                    legend_label='f*(g)')
+    images[2].line('xopt', 'gg', source=dual_source, color='black', alpha=.5, line_width=lw,
+                   legend_label='0')
 
     for fig in images:
         fig.legend.background_fill_alpha = .1
+        fig.legend.location = 'top_left'
 
     # temporary hover glyphs
     gxcircle = models.Circle(x='x', y='g', size=10, fill_color=tangentcolor,
