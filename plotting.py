@@ -130,14 +130,16 @@ def plot_conjugate(funcp, xx):
     set_range(fig1, xx, ff)
 
     if not is_f_convex:
-        envelope = fig1.line('xx', 'fcc', source=primal_source, line_width=2,
+        envelope = fig1.line('xx', 'fcc', source=primal_source, line_width=3,
                              color=envelopecolor)
     primal = fig1.line('xx', 'ff', source=primal_source, line_width=3,
                        color=primalcolor)
 
-    primaltangent = fig1.line('x', 'y', line_width=1, color=tangentcolor, alpha=.7,
-                              source=ColumnDataSource(dict(x=[], y=[])))
     primalpoint = fig1.circle('x', 'y', size=10, color=tangentcolor,
+                              source=ColumnDataSource(dict(x=[], y=[])))
+    primaltangent = fig1.line('x', 'y', line_width=2, color=tangentcolor,
+                              source=ColumnDataSource(dict(x=[], y=[])))
+    primaldroite = fig1.line('x', 'y', line_width=2, color='black', alpha=.7,
                               source=ColumnDataSource(dict(x=[], y=[])))
     primalheight = fig1.line('x', 'y', line_width=3, color=heightcolor,
                              source=ColumnDataSource(dict(x=[], y=[])))
@@ -296,8 +298,9 @@ def plot_conjugate(funcp, xx):
 
     # HOVERING
     hover_source_dict = {
-        'primaltangent': primaltangent.data_source,
         'primalpoint': primalpoint.data_source,
+        'primaltangent': primaltangent.data_source,
+        'primaldroite': primaldroite.data_source,
         'primalheight': primalheight.data_source,
         'primalgap': primalgap.data_source,
         'dualpoint': dualpoint.data_source,
@@ -367,6 +370,8 @@ def plot_conjugate(funcp, xx):
         args=source_dict,
         code="""
             let g0 = cb_obj.x;
+            let y0 = cb_obj.y;
+            
             let gg = dual.data['gg'];
             let j = gg.findIndex(g => g >=g0);
             if (j==-1){j = gg.length-1};
@@ -377,23 +382,27 @@ def plot_conjugate(funcp, xx):
             dualpoint.change.emit();
     
             dualheight.data['g'] = [g1, g1];
-            dualheight.data['y'] = [0, fc1];
+            dualheight.data['y'] = [y0, fc1];
             dualheight.change.emit();
     
             let i = dual.data['idxopt'][j];
             let xx = primal.data['xx'];
             let x1 = xx[i];
-            let y1 = primal.data['ff'][i];        
+            let ff1 = primal.data['ff'][i];        
             primalpoint.data['x'] = [x1];
-            primalpoint.data['y'] = [y1];
+            primalpoint.data['y'] = [ff1];
             primalpoint.change.emit();
     
             primaltangent.data['x'] = [xx[0]-1000, xx[xx.length-1]+1000];
-            primaltangent.data['y'] = primaltangent.data['x'].map(x => g1*(x-x1) + y1);
+            primaltangent.data['y'] = primaltangent.data['x'].map(x => g0*(x-x1) + ff1);
             primaltangent.change.emit();
+            
+            primaldroite.data.x = [xx[0]-1000, xx[xx.length-1]+1000];
+            primaldroite.data.y = primaldroite.data.x.map(x => g0 * x - y0);
+            primaldroite.change.emit();
     
-            primalheight.data['x'] = [0,0];
-            primalheight.data['y'] = [0,y1 - g1*x1];
+            primalheight.data['x'] = [x1, x1];
+            primalheight.data['y'] = [g0*x1 - y0, ff1];
             primalheight.change.emit();
     
             hpoint.data['x'] = [x1];
@@ -418,9 +427,9 @@ def plot_conjugate(funcp, xx):
         let i = xx.findIndex(x => x >=x0);
         if (i==-1){i = xx.length-1};
         let x1 = xx[i];
-        let y1 = primal.data['ff'][i];
+        let ff1 = primal.data['ff'][i];
         primalpoint.data['x'] = [x1];
-        primalpoint.data['y'] = [y1];
+        primalpoint.data['y'] = [ff1];
         primalpoint.change.emit();
         
         let j = gg.findIndex(g => g >=g0);
@@ -448,19 +457,19 @@ def plot_conjugate(funcp, xx):
             hline.change.emit();
             
             primaltangent.data['x'] = [xx[0]-1000, xx[xx.length-1]+1000];
-            primaltangent.data['y'] = primaltangent.data['x'].map(x => g1*(x-x1) + y1);
+            primaltangent.data['y'] = primaltangent.data['x'].map(x => g1*(x-x1) + ff1);
             primaltangent.change.emit();
     
             primalheight.data['x'] = [0,0];
-            primalheight.data['y'] = [0,y1 - g1*x1];
+            primalheight.data['y'] = [0,ff1 - g1*x1];
             primalheight.change.emit();
             
             dualheight.data['g'] = [g1, g1];
-            dualheight.data['y'] = [0, g1*x1-y1];
+            dualheight.data['y'] = [0, g1*x1-ff1];
             dualheight.change.emit();
             
             dualgap.data['g'] = [g1, g1];
-            dualgap.data['y'] = [g1*x1-y1, fc1];
+            dualgap.data['y'] = [g1*x1-ff1, fc1];
             dualgap.change.emit();
             """
         ))
@@ -491,7 +500,7 @@ def plot_conjugate(funcp, xx):
             primalheight.change.emit();
             
             primalgap.data['x'] = [x1, x1];
-            primalgap.data['y'] = [g1*x1-fc1, y1];
+            primalgap.data['y'] = [g1*x1-fc1, ff1];
             primalgap.change.emit();
             """
         ))
