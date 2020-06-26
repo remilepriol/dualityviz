@@ -144,15 +144,6 @@ def plot_conjugate(funcp, xx):
     primalgap = fig1.line('x', 'y', line_width=2, color='grey', alpha=.8,
                           source=ColumnDataSource(dict(x=[], y=[])))
 
-    ## trying a variation with arrows to indicate direction
-    primalarrow = models.Arrow(
-        x_start='x_start', y_start='y_start', x_end='x_end', y_end='y_end',
-        line_color=heightcolor, line_width=3,
-        source=ColumnDataSource(data={
-            'x_start': [], 'y_start': [], 'x_end': [], 'y_end': [], 'x': [], 'y': []
-        }))
-    fig1.add_layout(primalarrow)
-
     # plot the conjugate function
     fig2 = plotting.figure(title='Dual f*(g)', **opts,
                            tools='pan', x_axis_label='g', y_axis_label='y')
@@ -308,7 +299,6 @@ def plot_conjugate(funcp, xx):
         'tangent': primaltangent.data_source,
         'point': primalpoint.data_source,
         'primalheight': primalheight.data_source,
-        'primalarrow': primalarrow.source,
         'primalgap': primalgap.data_source,
         'dualpoint': dualpoint.data_source,
         'dualtangent': dualtangent.data_source,
@@ -350,13 +340,7 @@ def plot_conjugate(funcp, xx):
     
             primalheight.data['x'] = [x1,x1];
             primalheight.data['y'] = [0,y1]
-            //primalheight.change.emit();
-            
-            primalarrow.data.x_start = [x1];
-            primalarrow.data.x_end = [x1];
-            primalarrow.data.y_start = [0];
-            primalarrow.data.y_end = [y1];
-            primalarrow.change.emit();
+            primalheight.change.emit();
     
             dualheight.data['g'] = [0,0];
             dualheight.data['y'] = [0,fc1 - g1*x1];
