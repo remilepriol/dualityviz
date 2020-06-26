@@ -1,6 +1,6 @@
 import bokeh
 import numpy as np
-from bokeh import io, layouts, models, embed
+from bokeh import embed, io
 
 from plotting import plot_conjugate
 
@@ -27,10 +27,10 @@ bokeh.io.output_file(filename='conjugate.html', title='conjugate')
 
 np.random.seed(0)
 functiondict = {
-    'absolute value': (np.abs, -1, 1),
-    'x^4': (lambda x: x ** 4, -1, 1),
-    'x^4 + 4 x^3': (lambda x: x ** 4 + 4 * x ** 3, -1, 1),
-    'x^2 - cos(2 x)': (lambda x: x ** 2 - np.cos(2 * x), -5, 5),
+    '|x|': (np.abs, -1, 1),
+    'x^4 ': (lambda x: x ** 4, -1, 1),
+    'x^4 + 4 x^3 ': (lambda x: x ** 4 + 4 * x ** 3, -1, 1),
+    'x^2 - \cos(2 x)': (lambda x: x ** 2 - np.cos(2 * x), -5, 5),
     #
     # 'sin(x)': (np.sin, -np.pi, 0),
     # 'Entropy(x) = x log(x) + (1-x) log(1-x)': (entropy, 0, 1),
@@ -47,22 +47,24 @@ functiondict = {
 # figlist = [models.Div(text='<h1>Convex Conjugate Visualization</h1> \n' + abstract)]
 
 figlist = []
+scriptlist = []
 for name, (func, inf, sup) in functiondict.items():
-    subfigtitle = f"{name} on ({inf}, {sup})"
-    figlist += [layouts.column(
-        models.Div(text=f'<h2>{subfigtitle}</h2>'),
-        plot_conjugate(func, np.linspace(inf, sup, 150))
-    )]
-finalplot = layouts.column(figlist)
+    figtitle = f"<h2 class='plot-title'> \( x \mapsto {name} ; x \in [{inf}, {sup}] \)</h2>"
+    fig = plot_conjugate(func, np.linspace(inf, sup, 150))
+    script, div = embed.components(fig)
+    figlist += [figtitle, div]
+    scriptlist += [script]
 
-script, div = embed.components(finalplot)
+figstring = '\n'.join(figlist)
+script = '\n'.join(scriptlist)
 
-with open('abstract_math.html','r') as fin:
+with open('abstract_math.html', 'r') as fin:
     htmlstring = fin.read()
 
-newhtmlstring = htmlstring.replace("PLOTSHOLDER", div).replace("<div>SCRIPTHOLDER</div>", script)
+newhtmlstring = htmlstring.replace("PLOTSHOLDER", figstring).replace(
+    "<div>SCRIPTHOLDER</div>", script)
 
-with open("index.html","w") as fout:
+with open("index.html", "w") as fout:
     fout.write(newhtmlstring)
 
 # bokeh.io.save(finalplot, title='conjugates', filename='conjugate.html', )
