@@ -130,17 +130,15 @@ def plot_conjugate(funcp, xx):
     set_range(fig1, xx, ff)
 
     if not is_f_convex:
-        envelope = fig1.line('xx', 'fcc', source=primal_source, line_width=3,
-                             color=envelopecolor)
-    primal = fig1.line('xx', 'ff', source=primal_source, line_width=3,
-                       color=primalcolor)
+        fig1.line('xx', 'fcc', source=primal_source, line_width=3, color=envelopecolor)
+    fig1.line('xx', 'ff', source=primal_source, line_width=3, color=primalcolor)
 
     primalpoint = fig1.circle('x', 'y', size=10, color=tangentcolor,
                               source=ColumnDataSource(dict(x=[], y=[])))
     primaltangent = fig1.line('x', 'y', line_width=2, color=tangentcolor,
                               source=ColumnDataSource(dict(x=[], y=[])))
-    primaldroite = fig1.line('x', 'y', line_width=2, color='black', alpha=.7,
-                              source=ColumnDataSource(dict(x=[], y=[])))
+    primaldroite = fig1.line('x', 'y', line_width=2, color='black',
+                             source=ColumnDataSource(dict(x=[], y=[])))
     primalheight = fig1.line('x', 'y', line_width=3, color=heightcolor,
                              source=ColumnDataSource(dict(x=[], y=[])))
     primalgap = fig1.line('x', 'y', line_width=2, color='grey', alpha=.8,
@@ -154,8 +152,10 @@ def plot_conjugate(funcp, xx):
 
     dualpoint = fig2.circle('g', 'y', size=10, color=tangentcolor, alpha=.7,
                             source=ColumnDataSource(dict(g=[], y=[])))
-    dualtangent = fig2.line('g', 'y', line_width=1, color=tangentcolor,
+    dualtangent = fig2.line('g', 'y', line_width=2, color=tangentcolor,
                             source=ColumnDataSource(dict(g=[], y=[])))
+    dualdroite = fig2.line('g', 'y', line_width=2, color='black',
+                           source=ColumnDataSource(dict(g=[], y=[])))
     dualheight = fig2.line('g', 'y', line_width=3, color=heightcolor,
                            source=ColumnDataSource(dict(g=[], y=[])))
     dualgap = fig2.line('g', 'y', line_width=2, color='grey', alpha=.8,
@@ -305,6 +305,7 @@ def plot_conjugate(funcp, xx):
         'primalgap': primalgap.data_source,
         'dualpoint': dualpoint.data_source,
         'dualtangent': dualtangent.data_source,
+        'dualdroite': dualdroite.data_source,
         'dualheight': dualheight.data_source,
         'dualgap': dualgap.data_source,
         'hpoint': hpoint.data_source,
@@ -324,6 +325,8 @@ def plot_conjugate(funcp, xx):
         args=source_dict,
         code="""
             let x0 = cb_obj.x;
+            let y0 = cb_obj.y;
+            
             let xx = primal.data['xx'];
             let i = xx.findIndex(x => x >=x0);
             if (i==-1){i = xx.length-1};
@@ -332,6 +335,10 @@ def plot_conjugate(funcp, xx):
             primalpoint.data['x'] = [x1];
             primalpoint.data['y'] = [y1];
             primalpoint.change.emit();
+            
+            primalheight.data['x'] = [x1,x1];
+            primalheight.data['y'] = [y0,y1]
+            primalheight.change.emit();
     
             let j = primal.data['idgopt'][i];
             let gg = dual.data['gg'];
@@ -341,18 +348,18 @@ def plot_conjugate(funcp, xx):
             dualpoint.data['y'] = [fc1];
             dualpoint.change.emit();
     
-            primalheight.data['x'] = [x1,x1];
-            primalheight.data['y'] = [0,y1]
-            primalheight.change.emit();
-    
-            dualheight.data['g'] = [0,0];
-            dualheight.data['y'] = [0,fc1 - g1*x1];
+            dualheight.data['g'] = [g1,g1];
+            dualheight.data['y'] = [x0*g1 - y0, fc1];
             dualheight.change.emit();
-    
+            
             dualtangent.data['g'] = [gg[0]-1000, gg[gg.length-1]+1000];
             dualtangent.data['y'] = dualtangent.data['g'].map(g => fc1 + x1*(g-g1));
             dualtangent.change.emit();
     
+            dualdroite.data.g = dualtangent.data.g;
+            dualdroite.data.y = dualdroite.data.g.map(g => x0*g - y0);
+            dualdroite.change.emit();
+            
             vpoint.data['x'] = [x1];
             vpoint.data['g'] = [g1];
             vpoint.change.emit();   
