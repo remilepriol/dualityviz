@@ -191,16 +191,26 @@ def plot_conjugate(funcp, xx):
         fig.title.text = image_titles[name]
         fig.image(image=name, x='x0', dw='delta_x', y='g0', dh='delta_g', alpha=.7,
                   source=source2d, palette=colormap)
+
     lw = 2
-    images[0].line('xx', 'gzeros', source=primal_source, color=primalcolor, line_width=lw)
-    images[0].line('xopt', 'gg', source=dual_source, color=dualcolor, line_width=lw)
+    images[0].line('xx', 'gzeros', source=primal_source, color=primalcolor, line_width=lw,
+                   legend_label='-f(x)')
+    images[0].line('xopt', 'gg', source=dual_source, color=dualcolor, line_width=lw,
+                   legend_label='f*(g)')
 
-    images[1].line('xzeros', 'gg', source=dual_source, color=dualcolor, line_width=lw)
+    images[1].line('xzeros', 'gg', source=dual_source, color=dualcolor, line_width=lw,
+                   legend_label='-f*(g)')
     images[1].line('xx', 'gopt', source=primal_source,
-                   color=primalcolor if is_f_convex else envelopecolor, line_width=lw)
+                   color=primalcolor if is_f_convex else envelopecolor, line_width=lw,
+                   legend_label='f(x)')
 
-    images[2].line('xx', 'gzeros', source=primal_source, color=primalcolor, line_width=lw)
-    images[2].line('xzeros', 'gg', source=dual_source, color=dualcolor, line_width=lw)
+    images[2].line('xx', 'gzeros', source=primal_source, color=primalcolor, line_width=lw,
+                   legend_label='f(x)')
+    images[2].line('xzeros', 'gg', source=dual_source, color=dualcolor, line_width=lw,
+                   legend_label='f*(g)')
+
+    for fig in images:
+        fig.legend.background_fill_alpha = .1
 
     # temporary hover glyphs
     gxcircle = models.Circle(x='x', y='g', size=10, fill_color=tangentcolor,
