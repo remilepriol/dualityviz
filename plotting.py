@@ -71,36 +71,34 @@ def legendre(funcp, xrange):
 # import numeric.js
 # https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js
 
-def plot_conjugate(funcp, xx, pixelsize=350):
-    xx, ff, grad, fcc, fccgrad, idgopt, gg, fc, idxopt, gx, is_f_convex = legendre(funcp, xx)
-
+def plot_conjugate(resolution=100, pixelsize=350):
     #########
     # SOURCES
     #########
     # a source is made of columns with equal lengths
     # all the primal and dual ingredients go to their respective source
     primal_source = ColumnDataSource(data=dict(
-        xx=xx, ff=ff, grad=grad, fcc=fcc,
-        idgopt=idgopt, gopt=gg[idgopt], gzeros=np.zeros_like(xx)
+        xx=[], ff=[], grad=[], fcc=[],
+        idgopt=[], gopt=[], gzeros=[]
     ))
     # note to self : gopt is also the gradient of f**
     dual_source = ColumnDataSource(data=dict(
-        gg=gg, fc=fc, idxopt=idxopt,
-        xopt=xx[idxopt], xzeros=np.zeros_like(gg)
+        gg=[], fc=[], idxopt=[],
+        xopt=[], xzeros=[]
     ))
     # for images it's a bit more complex.
     # each column has length 1.
     # The image itself is an element
     # along with coordinates and width
     images_dict = {
-        'gxminusf': [gx - ff],
-        'gxminusfc': [gx - fc[:, np.newaxis]],
-        'youngs': [ff + fc[:, np.newaxis] - gx]
+        'gxminusf': [],
+        'gxminusfc': [],
+        'youngs': []
     }
     source2d = ColumnDataSource(data={
         **images_dict,
-        'x0': [xx[0]], 'delta_x': [xx[-1] - xx[0]],
-        'g0': [gg[0]], 'delta_g': [gg[-1] - gg[0]]
+        'x0': [], 'delta_x': [],
+        'g0': [], 'delta_g': []
     })
     image_titles = {'gxminusf': 'g.x - f(x) (maximize on x to get f*)',
                     'gxminusfc': 'g.x - f*(g) (maximize on g to get f**)',
@@ -126,12 +124,10 @@ def plot_conjugate(funcp, xx, pixelsize=350):
     fig1 = plotting.figure(title='Primal f(x)', **opts, tools='pan',
                            # tools='pan,wheel_zoom', active_scroll='wheel_zoom',
                            x_axis_label='x', y_axis_label='y')
-    set_range(fig1, xx, ff)
-
-    if not is_f_convex:
-        fig1.line('xx', 'fcc', source=primal_source, line_width=3, color=primalcolor, alpha=.5)
+    fig1.line('xx', 'fcc', source=primal_source, line_width=3, color=primalcolor, alpha=.5)
     fig1.line('xx', 'ff', source=primal_source, line_width=3, color=primalcolor)
 
+    # temporary hovering glyphs
     primalpoint = fig1.circle('x', 'y', size=10, color=tangentcolor,
                               source=ColumnDataSource(dict(x=[], y=[])))
     primaltangent = fig1.line('x', 'y', line_width=2, color=tangentcolor,
@@ -143,12 +139,12 @@ def plot_conjugate(funcp, xx, pixelsize=350):
     primalgap = fig1.line('x', 'y', line_width=3, color=gapcolor, line_dash='dotted',
                           source=ColumnDataSource(dict(x=[], y=[])))
 
-    # plot the conjugate function
+    # plot the dual function
     fig2 = plotting.figure(title='Dual f*(g)', **opts,
                            tools='pan', x_axis_label='g', y_axis_label='y')
-    set_range(fig2, gg, fc)
     fig2.line('gg', 'fc', source=dual_source, line_width=3, color=dualcolor)
 
+    # temporary hovering glyphs
     dualpoint = fig2.circle('g', 'y', size=10, color=tangentcolor, alpha=.7,
                             source=ColumnDataSource(dict(g=[], y=[])))
     dualtangent = fig2.line('g', 'y', line_width=2, color=tangentcolor,
@@ -225,89 +221,7 @@ def plot_conjugate(funcp, xx, pixelsize=350):
     ##############
     # INTERACTIONS
     ##############
-    # INPUT FUNCTION
-    # very complicated without going full blown JS
-    inputfunc = bokeh.models.TextInput(title='f(x)=', value='x^4')
-    inputfunc.js_on_change('value', CustomJS(
-        args={},
-        code="""
-            math.eval(cb_obj.value,x)
-        """))
 
-    # SLIDERS:  Scaling the primal with 5 sliders
-    deltax = (max(xx) - min(xx)) + .1
-    deltay = (max(ff) - min(ff)) + .1
-    deltag = (max(gg) - min(gg)) + .1
-    sliders_dict = {
-        'x_shift': models.Slider(
-            start=-deltax, end=deltax, value=0, step=deltax / 100, title="x shift"
-        ),
-        'f_shift': models.Slider(
-            start=-deltay, end=deltay, value=0, step=deltay / 100, title="f shift"
-        ),
-        'g_shift': models.Slider(
-            start=-deltag, end=deltag, value=0, step=deltag / 100, title="g shift"
-        ),
-        'x_dilate': models.Slider(
-            start=.5, end=2, value=1, step=0.01, title="x dilation"
-        ),
-        'f_dilate': models.Slider(
-            start=.5, end=2, value=1, step=0.01, title="f dilation"
-        )
-    }
-
-    slider_callback = CustomJS(
-        args={
-            **sliders_dict,
-            **primal_source.data, **dual_source.data, **source2d.data,
-            'primal': primal_source, 'dual': dual_source, 'source2d': source2d
-        },
-        code="""
-            const xs = x_shift.value;
-            const fs = f_shift.value;
-            const gs = g_shift.value;
-            const xd = x_dilate.value;
-            const fd = f_dilate.value;
-            
-            function xtransform(x){
-                return x/xd + xs
-            }
-            function gtransform(g){
-                return xd * fd * g + gs
-            }
-            
-            let new_xx = xx.map(xtransform);
-            let new_gg = gg.map(gtransform);
-            
-            for (let i=0; i<primal.data['xx'].length ;i++){
-                primal.data['xx'][i] = new_xx[i];
-                primal.data['gzeros'][i] = gtransform(0);
-                primal.data['grad'][i] = gtransform(grad[i]);
-                primal.data['gopt'][i] = gtransform(gopt[i]);
-                primal.data['ff'][i] = fd * ff[i] + gs * (new_xx[i]-xs)  + fs;
-                primal.data['fcc'][i] = fd * fcc[i] + gs * (new_xx[i]-xs)  + fs;
-            }
-            primal.change.emit();
-    
-            for (let i=0; i<dual.data['gg'].length ;i++){
-                dual.data['xzeros'][i] = xtransform(0);
-                dual.data['xopt'][i] = xtransform(xopt[i]) ;
-                dual.data['gg'][i] = new_gg[i];
-                dual.data['fc'][i] = fd*fc[i] + xs * new_gg[i] - fs;
-            }         
-            dual.change.emit();
-            
-            source2d.data['x0'][0] = new_xx[0];
-            source2d.data['delta_x'][0] = new_xx[new_xx.length-1] - new_xx[0];
-            source2d.data['g0'][0] = new_gg[0];
-            source2d.data['delta_g'][0] = new_gg[new_gg.length-1] - new_gg[0];
-            source2d.change.emit();
-            """
-    )
-    for slider in sliders_dict.values():
-        slider.js_on_change('value', slider_callback)
-
-    # HOVERING
     hover_source_dict = {
         'primalpoint': primalpoint.data_source,
         'primaltangent': primaltangent.data_source,
@@ -331,6 +245,73 @@ def plot_conjugate(funcp, xx, pixelsize=350):
         **hover_source_dict
     }
 
+    # INPUT FUNCTION
+    # complicated without going full blown JS
+    inputfunc = bokeh.models.TextInput(title='f(x) =', value='x^4', name='functionInputBox')
+    lower_x = bokeh.models.TextInput(title='minimum x =', value='-1', name='lowerXInput')
+    upper_x = bokeh.models.TextInput(title='maximum x =', value='1', name='upperXInput')
+    textinput_js = CustomJS(
+        name='functionRefreshScript',
+        args=dict(inputfunc=inputfunc, lower_x=lower_x, upper_x=upper_x, resolution=resolution,
+                  primal_source=primal_source, dual_source=dual_source, source2d=source2d),
+        code="""  
+        let x0 = +lower_x.value;
+        let x1 = +upper_x.value;
+        
+        // console.log(primal_source);
+        for (let arr of primal_source.data){
+            console.log(arr)
+        }        
+        
+         
+        let xx = primal_source.data.xx = [];
+        let step = (x1-x0)/(resolution-1);
+        for (let i=0; i<resolution; i++) {
+            xx.push(x0 + i*step)
+        }
+        
+        function primalFunc(x) {
+            let out;
+            try {
+                out = math.evaluate(inputfunc.value, {'x':x});
+            } catch (e) {
+                return  x;
+            }
+            if (out == undefined) return x;
+            return out;   
+        }
+        
+        primal_source.data.ff = xx.map(primalFunc);
+        
+        function primalDerivative(x) {
+            let out;
+            try {
+                out = math.derivative(inputfunc.value, 'x').evaluate({'x': x});
+            } catch (e) {
+                return  x;
+            }
+            if (out == undefined) return x;
+            return out; 
+        }
+        primal_source.data.grad = xx.map(primalDerivative);
+        
+        let fcc = primal_source.data.fcc = [];
+        let idgopt = primal_source.data.idgopt= [];
+        let gopt = primal_source.data.gopt= [];
+        let gzeros = primal_source.data.gzeros= [];
+        
+        for (let arr of [fcc, idgopt, gopt, gzeros]){
+            for (let i=0; i<resolution; i++){
+                arr.push(0);
+            }
+        }
+        primal_source.change.emit();
+        """)
+
+    for textinput in [inputfunc, lower_x, upper_x]:
+        textinput.js_on_change('value', textinput_js)
+
+    # HOVERING
     # hover over primal plot
     primalhoverjs = CustomJS(
         args=source_dict,
@@ -539,10 +520,8 @@ def plot_conjugate(funcp, xx, pixelsize=350):
         fig.js_on_event(bokeh.events.MouseLeave, jsleave)
 
     bigfig = layouts.gridplot([
+        [inputfunc, lower_x, upper_x],
         [fig1, fig2, fig3],
-        images,
-        [sliders_dict['x_shift'], sliders_dict['f_shift'], sliders_dict['g_shift']],
-        [sliders_dict['x_dilate'], sliders_dict['f_dilate'], None],
-        # [sliders_dict['x_shift'], sliders_dict['f_shift'], None],
+        # images,
     ], toolbar_location=None)
     return bigfig
