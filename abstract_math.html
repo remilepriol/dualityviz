@@ -12,9 +12,6 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     <link href="template_files/style.css" rel="stylesheet">
 
-    <!-- maths for the viz   -->
-    <script src="math.min.js" charset="utf-8"></script>
-
 </head>
 
 <body>
@@ -107,7 +104,7 @@
 <div class="container-fluid">
 <div class="row">
     <div style="margin: auto">
-    PLOTSHOLDER
+    <!--PLOTSHOLDER-->
     </div>
 </div>
 </div>
@@ -119,9 +116,11 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 
-<script id="MathJax-script" async
-        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<!-- maths for the viz   -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/7.0.2/math.min.js" charset="utf-8"></script>
+
 
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.0.2.min.js"
         crossorigin="anonymous"></script>
@@ -130,7 +129,16 @@
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.0.2.min.js"
         crossorigin="anonymous"></script>
 
-<div>SCRIPTHOLDER</div>
+<!--SCRIPTHOLDER-->
+
+<!--Write into input box to trigger JS plotting callback-->
+<script>
+    window.onload = function(){
+        let functionRefreshScript = window.Bokeh.documents[0].get_model_by_name('functionRefreshScript');
+        functionRefreshScript.execute();
+    }
+</script>
+
 
 </body>
 </html>
