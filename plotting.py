@@ -288,21 +288,30 @@ def plot_conjugate(resolution=100, pixelsize=350):
         }
         let ff = primal_source.data.ff = xx.map(primalFunc);
         
-        let inputDerivative = math.derivative(inputfunc.value, 'x')
-        function primalDerivative(x) {
-            let out;
-            try {
-                out = inputDerivative.evaluate({'x': x});
-            } catch (e) {
-                return  x;
+        try{
+            let inputDerivative = math.derivative(inputfunc.value, 'x');
+            function primalDerivative(x) {
+                let out;
+                try {
+                    out = inputDerivative.evaluate({'x': x});
+                } catch (e) {
+                    return  x;
+                }
+                if (out == undefined) return x;
+                return out; 
             }
-            if (out == undefined) return x;
-            return out; 
+            primal_source.data.grad = xx.map(primalDerivative);
+        } catch (e) {
+            primal_source.data.grad = [];
+            primal_source.data.grad.push((ff[1]-ff[0])/(xx[1]-xx[0]));
+            for (let i=0; i<xx.length-1; i++){
+                primal_source.data.grad.push((ff[i+1]-ff[i])/(xx[i+1]-xx[i]));
+            }
         }
-        let grad = primal_source.data.grad = xx.map(primalDerivative);
+        console.log(primal_source.data);
         
-        let gmax = Math.max(...grad);
-        let gmin = Math.min(...grad);
+        let gmax = Math.max(...primal_source.data.grad);
+        let gmin = Math.min(...primal_source.data.grad);
         let gg =  linspace(gmin,gmax,resolution);
         
         function customMax(array) {
@@ -368,7 +377,6 @@ def plot_conjugate(resolution=100, pixelsize=350):
                   textinput_js=textinput_js),
         code="""
         let active_button = cb_obj.active;
-        console.log(active_button);
         [inputfunc.value, lower_x.value, upper_x.value] = function_samples[cb_obj.labels[
         active_button]].map(String);
         textinput_js.execute();
