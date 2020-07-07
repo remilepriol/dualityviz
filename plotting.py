@@ -253,13 +253,13 @@ def plot_conjugate(resolution=100, pixelsize=350):
     textinput_js = CustomJS(
         name='functionRefreshScript',
         args=dict(inputfunc=inputfunc, lower_x=lower_x, upper_x=upper_x, resolution=resolution,
-                  primal_source=primal_source, dual_source=dual_source, source2d=source2d),
+                  primal=primal_source, dual=dual_source, source2d=source2d),
         code="""  
-        let xmax = +lower_x.value;
-        let xmin = +upper_x.value;
+        let xmin = +lower_x.value;
+        let xmax = +upper_x.value;
         
         // clean all arrays
-        for (let sourceData of [primal_source.data, dual_source.data]){
+        for (let sourceData of [primal.data, dual.data]){
             for (let name in sourceData){
                 sourceData[name] = [];    
             }        
@@ -274,7 +274,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
             return out;
         }
          
-        let xx = primal_source.data.xx = linspace(xmin,xmax,resolution);
+        let xx = primal.data.xx = linspace(xmin,xmax,resolution);
         
         function primalFunc(x) {
             let out;
@@ -286,7 +286,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
             if (out == undefined) return x;
             return out;   
         }
-        let ff = primal_source.data.ff = xx.map(primalFunc);
+        let ff = primal.data.ff = xx.map(primalFunc);
         
         try{
             let inputDerivative = math.derivative(inputfunc.value, 'x');
@@ -300,18 +300,17 @@ def plot_conjugate(resolution=100, pixelsize=350):
                 if (out == undefined) return x;
                 return out; 
             }
-            primal_source.data.grad = xx.map(primalDerivative);
+            primal.data.grad = xx.map(primalDerivative);
         } catch (e) {
-            primal_source.data.grad = [];
-            primal_source.data.grad.push((ff[1]-ff[0])/(xx[1]-xx[0]));
+            primal.data.grad = [];
+            primal.data.grad.push((ff[1]-ff[0])/(xx[1]-xx[0]));
             for (let i=0; i<xx.length-1; i++){
-                primal_source.data.grad.push((ff[i+1]-ff[i])/(xx[i+1]-xx[i]));
+                primal.data.grad.push((ff[i+1]-ff[i])/(xx[i+1]-xx[i]));
             }
         }
-        console.log(primal_source.data);
         
-        let gmax = Math.max(...primal_source.data.grad);
-        let gmin = Math.min(...primal_source.data.grad);
+        let gmax = Math.max(...primal.data.grad);
+        let gmin = Math.min(...primal.data.grad);
         let gg =  linspace(gmin,gmax,resolution);
         
         function customMax(array) {
@@ -338,18 +337,39 @@ def plot_conjugate(resolution=100, pixelsize=350):
         }
         
         let [gxminusf, dualdata] = getConjugate(xx,gg,ff);
-        dual_source.data = dualdata;
+        dual.data = dualdata;
         
-        dual_source.change.emit();
+        dual.change.emit();
         
-        let [gxminusfc, envelopedata] = getConjugate(gg, xx, dual_source.data.fc)
+        // CONVEX ENVELOPE
+        let [gxminusfc, envelopedata] = getConjugate(gg, xx, dual.data.fc)
         
-        primal_source.data.fcc = envelopedata.fc;
-        primal_source.data.idgopt = envelopedata.idxopt;
-        primal_source.data.gopt = envelopedata.xopt;
-        primal_source.data.gzeros = envelopedata.xzeros;
-    
-        primal_source.change.emit();
+        primal.data.fcc = envelopedata.fc;
+        primal.data.idgopt = envelopedata.idxopt;
+        primal.data.gopt = envelopedata.xopt;
+        primal.data.gzeros = envelopedata.xzeros;
+        primal.change.emit();
+        
+        // SOURCE 2D
+        let youngs = [];
+        let rowi;
+        for (let i =0; i<resolution; i++) {
+            rowi = [];
+            for (let j=0; j<resolution; j++) {
+                rowi.push(dual.data.fc[i]+primal.data.ff[j] - gg[i]*xx[j]);   
+            }
+            youngs.push(rowi);
+        }
+        
+        
+        source2d.data.gxminusf = [gxminusf];
+        source2d.data.gxminusfc = [gxminusfc];
+        source2d.data.youngs = [youngs];
+        source2d.data.x0 = [xmin];
+        source2d.data.delta_x = [xmax - xmin];
+        source2d.data.g0 = [gmin];
+        source2d.data.delta_g = [gmax - gmin];
+        source2d.change.emit();
         """)
 
     for textinput in [inputfunc, lower_x, upper_x]:
@@ -416,7 +436,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
             dualheight.data['y'] = [x0*g1 - y0, fc1];
             dualheight.change.emit();
             
-            dualtangent.data['g'] = [gg[0]-1000, gg[gg.length-1]+1000];
+            dualtangent.data['g'] = [gg[0], gg[gg.length-1]];
             dualtangent.data['y'] = dualtangent.data['g'].map(g => fc1 + x1*(g-g1));
             dualtangent.change.emit();
     
@@ -464,11 +484,11 @@ def plot_conjugate(resolution=100, pixelsize=350):
             primalpoint.data['y'] = [ff1];
             primalpoint.change.emit();
     
-            primaltangent.data['x'] = [xx[0]-1000, xx[xx.length-1]+1000];
+            primaltangent.data['x'] = [xx[0], xx[xx.length-1]];
             primaltangent.data['y'] = primaltangent.data['x'].map(x => g0*(x-x1) + ff1);
             primaltangent.change.emit();
             
-            primaldroite.data.x = [xx[0]-1000, xx[xx.length-1]+1000];
+            primaldroite.data.x =  primaltangent.data.x;
             primaldroite.data.y = primaldroite.data.x.map(x => g0 * x - y0);
             primaldroite.change.emit();
     
@@ -596,7 +616,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
         radio_function_selection,
         layouts.gridplot([
             [fig1, fig2, fig3],
-            # images,
+            images,
         ], toolbar_location=None)
     ])
     return bigfig
