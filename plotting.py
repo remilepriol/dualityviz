@@ -255,20 +255,26 @@ def plot_conjugate(resolution=100, pixelsize=350):
         args=dict(inputfunc=inputfunc, lower_x=lower_x, upper_x=upper_x, resolution=resolution,
                   primal_source=primal_source, dual_source=dual_source, source2d=source2d),
         code="""  
-        let x0 = +lower_x.value;
-        let x1 = +upper_x.value;
+        let xmax = +lower_x.value;
+        let xmin = +upper_x.value;
         
-        // console.log(primal_source);
-        for (let arr of primal_source.data){
-            console.log(arr)
-        }        
-        
-         
-        let xx = primal_source.data.xx = [];
-        let step = (x1-x0)/(resolution-1);
-        for (let i=0; i<resolution; i++) {
-            xx.push(x0 + i*step)
+        // clean all arrays
+        for (let sourceData of [primal_source.data, dual_source.data]){
+            for (let name in sourceData){
+                sourceData[name] = [];    
+            }        
         }
+        
+        function linspace(min,max,n) {
+            let step=(max-min)/(n-1);
+            let out = [];
+            for (let i=0; i<n; i++) {
+                out.push(min + i * step);
+            }
+            return out;
+        }
+         
+        let xx = primal_source.data.xx = linspace(xmin,xmax,resolution);
         
         function primalFunc(x) {
             let out;
@@ -280,31 +286,60 @@ def plot_conjugate(resolution=100, pixelsize=350):
             if (out == undefined) return x;
             return out;   
         }
+        let ff = primal_source.data.ff = xx.map(primalFunc);
         
-        primal_source.data.ff = xx.map(primalFunc);
-        
+        let inputDerivative = math.derivative(inputfunc.value, 'x')
         function primalDerivative(x) {
             let out;
             try {
-                out = math.derivative(inputfunc.value, 'x').evaluate({'x': x});
+                out = inputDerivative.evaluate({'x': x});
             } catch (e) {
                 return  x;
             }
             if (out == undefined) return x;
             return out; 
         }
-        primal_source.data.grad = xx.map(primalDerivative);
+        let grad = primal_source.data.grad = xx.map(primalDerivative);
         
-        let fcc = primal_source.data.fcc = [];
-        let idgopt = primal_source.data.idgopt= [];
-        let gopt = primal_source.data.gopt= [];
-        let gzeros = primal_source.data.gzeros= [];
+        let gmax = Math.max(...grad);
+        let gmin = Math.min(...grad);
+        let gg =  linspace(gmin,gmax,resolution);
         
-        for (let arr of [fcc, idgopt, gopt, gzeros]){
-            for (let i=0; i<resolution; i++){
-                arr.push(0);
-            }
+        function customMax(array) {
+            // return [max, argmax] 
+            return array.map((x, i) => [x, i]).reduce((r, a) => (a[0] > r[0] ? a : r));
         }
+        
+        function getConjugate(xx,gg,ff){
+            let gxminusf = []; 
+            let d = {gg:gg, fc:[], idxopt:[], xopt:[], xzeros:[]};
+            for (let i=0; i<resolution; i++){
+                let rowi = [];
+                for(let j=0; j<resolution; j++){
+                    rowi.push(gg[i]*xx[j] - ff[j])
+                }
+                gxminusf.push(rowi);
+                let [max, argmax] = customMax(rowi);
+                d.fc.push(max);
+                d.idxopt.push(argmax)
+                d.xopt.push(xx[argmax]);
+                d.xzeros.push(0);
+            }
+            return [gxminusf, d];
+        }
+        
+        let [gxminusf, dualdata] = getConjugate(xx,gg,ff);
+        dual_source.data = dualdata;
+        
+        dual_source.change.emit();
+        
+        let [gxminusfc, envelopedata] = getConjugate(gg, xx, dual_source.data.fc)
+        
+        primal_source.data.fcc = envelopedata.fc;
+        primal_source.data.idgopt = envelopedata.idxopt;
+        primal_source.data.gopt = envelopedata.xopt;
+        primal_source.data.gzeros = envelopedata.xzeros;
+    
         primal_source.change.emit();
         """)
 
