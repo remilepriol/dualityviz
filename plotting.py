@@ -6,18 +6,6 @@ from bokeh import events, layouts, models, palettes, plotting
 from bokeh.models import ColumnDataSource, CustomJS
 
 
-def entropy(x):
-    return x * np.log(np.maximum(x, 1e-50)) + (1 - x) * np.log(np.maximum(1 - x, 1e-50))
-
-
-def hinge(x):
-    return np.maximum(1 - x, 0)
-
-
-def squared_hinge(x):
-    return np.maximum(1 - x, 0) ** 2
-
-
 def colormap2hexpalette(cmlist):
     """Convert a list of matplotlib colormap names into a dictionary of hex list.
 
@@ -360,21 +348,32 @@ def plot_conjugate(resolution=100, pixelsize=350):
 
     # RADIO BUTTON to select function
     function_samples = {
-        'x^4': ('x^4', lambda x: x ** 4, -1, 1),
-        'x^4 + 4 x^3': ('x^4 + 4 x^3', lambda x: x ** 4 + 4 * x ** 3, -1, 1),
-        '|x|': ('|x|', np.abs, -1, 1),
-        'x^2': ('x^2', np.abs, -1, 1),
-        'x^2 - cos(2 x)': ('x^2 - cos(2 x)', lambda x: x ** 2 - np.cos(2 * x), -5, 5),
-        'sin(x)': ('sin(x)', np.sin, -3.14, 0),
-        'x sin(1/x)': (lambda x: x * np.sin(1 / x), -1, 1),
-        'Entropy': ('x log(x) + (1-x) log(1-x)', entropy, 0, 1),
-        'Hinge': ('max(0,1-x)', hinge, -2, 2),
-        'Squared Hinge': ('max(0,1-x)^2', squared_hinge, -2, 2),
-        # '0': (np.zeros_like, -1, 1),  # not working yet
+        'x^4': ('x^4', -1, 1),
+        'x^4 + 4 x^3': ('x^4 + 4 x^3', -1, 1),
+        'absolute value': ('max(x, -x)', -1, 1),
+        'quadratic': ('1/2 x^2', -1, 1),
+        'x^2 - cos(2 x)': ('x^2 - cos(2 x)', -5, 5),
+        'sin(x)': ('sin(x)', -3.14, 0),
+        'x sin(1/x)': ('x sin(1/x)', -1, 1),
+        'Entropy': ('x log(x) + (1-x) log(1-x)', 0, 1),
+        'Hinge': ('max(0, 1-x)', -2, 2),
+        'Squared Hinge': ('max(0, 1-x)^2', -2, 2),
     }
     radio_function_selection = models.RadioButtonGroup(
         labels=list(function_samples.keys()), active=0
     )
+    radio_function_selection.js_on_change('active', CustomJS(
+        args=dict(function_samples=function_samples,
+                  inputfunc=inputfunc, lower_x=lower_x, upper_x=upper_x,
+                  textinput_js=textinput_js),
+        code="""
+        let active_button = cb_obj.active;
+        console.log(active_button);
+        [inputfunc.value, lower_x.value, upper_x.value] = function_samples[cb_obj.labels[
+        active_button]].map(String);
+        textinput_js.execute();
+        """
+    ))
 
     # HOVERING
     # hover over primal plot
