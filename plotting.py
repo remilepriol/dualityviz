@@ -26,28 +26,6 @@ def set_range(fig, xx, yy, delta=.1):
     fig.x_range = models.Range1d(min(xx) - deltax, max(xx) + deltax)
     fig.y_range = models.Range1d(min(yy) - deltay, max(yy) + deltay)
 
-
-js_set_range = """
-function set_range(fig, xx, yy, delta=0.1) {
-    let xmax = Math.max(...xx);
-    let ymax = Math.max(...yy);
-    let xmin = Math.min(...xx);
-    let ymin = Math.min(...yy);
-    let deltax = delta * (xmax - xmin);
-    let deltay = delta * (ymax - ymin);
-    fig.x_range.start = xmin - deltax;
-    fig.x_range.end = xmax + deltax;
-    fig.y_range.start = ymin - deltay;
-    fig.y_range.end = ymax + deltay;
-    console.log(fig)
-    fig.x_range.change.emit();
-    fig.y_range.change.emit();
-}
-set_range(primalfig, primal.data.xx, primal.data.ff);
-set_range(dualfig, dual.data.gg, dual.data.fc);
-"""
-
-
 def get_conjugate(ff, xrange, grange):
     # 2D array with all the combinations
     gx = grange[:, np.newaxis] * xrange[np.newaxis, :]
@@ -146,7 +124,8 @@ def plot_conjugate(resolution=100, pixelsize=350):
                            # tools='pan,wheel_zoom', active_scroll='wheel_zoom',
                            x_axis_label='x', y_axis_label='y')
     primalfig.line('xx', 'fcc', source=primal_source, line_width=3, color=primalcolor, alpha=.5)
-    primalfig.line('xx', 'ff', source=primal_source, line_width=3, color=primalcolor)
+    primal_line = primalfig.line('xx', 'ff', source=primal_source, line_width=3, color=primalcolor)
+    primalfig.y_range.renderers = primalfig.x_range.renderers = [primal_line]
 
     # temporary hovering glyphs
     primalpoint = primalfig.circle('x', 'y', size=10, color=tangentcolor,
@@ -163,7 +142,8 @@ def plot_conjugate(resolution=100, pixelsize=350):
     # plot the dual function
     dualfig = plotting.figure(title='Dual f*(g)', **opts, name='dualfig',
                            tools='pan', x_axis_label='g', y_axis_label='y')
-    dualfig.line('gg', 'fc', source=dual_source, line_width=3, color=dualcolor)
+    dual_line = dualfig.line('gg', 'fc', source=dual_source, line_width=3, color=dualcolor)
+    dualfig.y_range.renderers = dualfig.x_range.renderers = [dual_line]
 
     # temporary hovering glyphs
     dualpoint = dualfig.circle('g', 'y', size=10, color=tangentcolor, alpha=.7,
@@ -476,7 +456,6 @@ def plot_conjugate(resolution=100, pixelsize=350):
             vline.data['g'] = [gg[0], gg[gg.length - 1]];
             vline.change.emit();
             """
-             + js_set_range
     )
     primalfig.js_on_event(bokeh.events.MouseMove, primalhoverjs)
     primalfig.js_on_event(bokeh.events.Tap, primalhoverjs)
@@ -529,7 +508,6 @@ def plot_conjugate(resolution=100, pixelsize=350):
             hline.data['g'] = [g1, g1];
             hline.change.emit();
             """
-             + js_set_range
     )
     dualfig.js_on_event(bokeh.events.MouseMove, dualhoverjs)
     dualfig.js_on_event(bokeh.events.Tap, dualhoverjs)
