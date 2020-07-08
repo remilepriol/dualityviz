@@ -26,6 +26,7 @@ def set_range(fig, xx, yy, delta=.1):
     fig.x_range = models.Range1d(min(xx) - deltax, max(xx) + deltax)
     fig.y_range = models.Range1d(min(yy) - deltay, max(yy) + deltay)
 
+
 def get_conjugate(ff, xrange, grange):
     # 2D array with all the combinations
     gx = grange[:, np.newaxis] * xrange[np.newaxis, :]
@@ -121,41 +122,41 @@ def plot_conjugate(resolution=100, pixelsize=350):
 
     # plot the primal function
     primalfig = plotting.figure(title='Primal f(x)', **opts, tools='pan', name='primalfig',
-                           # tools='pan,wheel_zoom', active_scroll='wheel_zoom',
-                           x_axis_label='x', y_axis_label='y')
+                                # tools='pan,wheel_zoom', active_scroll='wheel_zoom',
+                                x_axis_label='x', y_axis_label='y')
     primalfig.line('xx', 'fcc', source=primal_source, line_width=3, color=primalcolor, alpha=.5)
     primal_line = primalfig.line('xx', 'ff', source=primal_source, line_width=3, color=primalcolor)
     primalfig.y_range.renderers = primalfig.x_range.renderers = [primal_line]
 
     # temporary hovering glyphs
     primalpoint = primalfig.circle('x', 'y', size=10, color=tangentcolor,
-                              source=ColumnDataSource(dict(x=[], y=[])))
+                                   source=ColumnDataSource(dict(x=[], y=[])))
     primaltangent = primalfig.line('x', 'y', line_width=2, color=tangentcolor,
-                              source=ColumnDataSource(dict(x=[], y=[])))
+                                   source=ColumnDataSource(dict(x=[], y=[])))
     primaldroite = primalfig.line('x', 'y', line_width=2, color='black',
-                             source=ColumnDataSource(dict(x=[], y=[])))
+                                  source=ColumnDataSource(dict(x=[], y=[])))
     primalheight = primalfig.line('x', 'y', line_width=3, color=heightcolor, line_cap='round',
-                             source=ColumnDataSource(dict(x=[], y=[])))
+                                  source=ColumnDataSource(dict(x=[], y=[])))
     primalgap = primalfig.line('x', 'y', line_width=3, color=gapcolor, line_dash='dotted',
-                          source=ColumnDataSource(dict(x=[], y=[])))
+                               source=ColumnDataSource(dict(x=[], y=[])))
 
     # plot the dual function
     dualfig = plotting.figure(title='Dual f*(g)', **opts, name='dualfig',
-                           tools='pan', x_axis_label='g', y_axis_label='y')
+                              tools='pan', x_axis_label='g', y_axis_label='y')
     dual_line = dualfig.line('gg', 'fc', source=dual_source, line_width=3, color=dualcolor)
     dualfig.y_range.renderers = dualfig.x_range.renderers = [dual_line]
 
     # temporary hovering glyphs
     dualpoint = dualfig.circle('g', 'y', size=10, color=tangentcolor, alpha=.7,
-                            source=ColumnDataSource(dict(g=[], y=[])))
+                               source=ColumnDataSource(dict(g=[], y=[])))
     dualtangent = dualfig.line('g', 'y', line_width=2, color=tangentcolor,
-                            source=ColumnDataSource(dict(g=[], y=[])))
+                               source=ColumnDataSource(dict(g=[], y=[])))
     dualdroite = dualfig.line('g', 'y', line_width=2, color='black',
-                           source=ColumnDataSource(dict(g=[], y=[])))
+                              source=ColumnDataSource(dict(g=[], y=[])))
     dualheight = dualfig.line('g', 'y', line_width=3, color=heightcolor, line_cap='round',
-                           source=ColumnDataSource(dict(g=[], y=[])))
+                              source=ColumnDataSource(dict(g=[], y=[])))
     dualgap = dualfig.line('g', 'y', line_width=3, color=gapcolor, line_dash='dotted',
-                        source=ColumnDataSource(dict(g=[], y=[])))
+                           source=ColumnDataSource(dict(g=[], y=[])))
 
     # highlight lines x=0 and y=0 in primal and dual plots
     for fig in [primalfig, dualfig]:
@@ -170,7 +171,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
 
     # plot gradients
     gradientfig = plotting.figure(title='Derivatives', **opts, tools='',
-                           x_axis_label='x', y_axis_label='g')
+                                  x_axis_label='x', y_axis_label='g')
     gradientfig.line('xopt', 'gg', source=dual_source, line_width=3, color=dualcolor)
     gradientfig.line('xx', 'grad', source=primal_source, color=primalcolor, line_width=3)
 
@@ -440,7 +441,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
             dualheight.data['y'] = [x0*g1 - y0, fc1];
             dualheight.change.emit();
             
-            dualtangent.data['g'] = [gg[0], gg[gg.length-1]];
+            dualtangent.data['g'] = [gg[0]-10, gg[gg.length-1]+10];
             dualtangent.data['y'] = dualtangent.data['g'].map(g => fc1 + x1*(g-g1));
             dualtangent.change.emit();
     
@@ -457,8 +458,6 @@ def plot_conjugate(resolution=100, pixelsize=350):
             vline.change.emit();
             """
     )
-    primalfig.js_on_event(bokeh.events.MouseMove, primalhoverjs)
-    primalfig.js_on_event(bokeh.events.Tap, primalhoverjs)
 
     # hover over dual plot
     dualhoverjs = CustomJS(
@@ -488,7 +487,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
             primalpoint.data['y'] = [ff1];
             primalpoint.change.emit();
     
-            primaltangent.data['x'] = [xx[0], xx[xx.length-1]];
+            primaltangent.data['x'] = [xx[0]-10, xx[xx.length-1]+10];
             primaltangent.data['y'] = primaltangent.data['x'].map(x => g0*(x-x1) + ff1);
             primaltangent.change.emit();
             
@@ -509,8 +508,6 @@ def plot_conjugate(resolution=100, pixelsize=350):
             hline.change.emit();
             """
     )
-    dualfig.js_on_event(bokeh.events.MouseMove, dualhoverjs)
-    dualfig.js_on_event(bokeh.events.Tap, dualhoverjs)
 
     # Hover over X,G plots
     code_get_xg = """
@@ -536,69 +533,72 @@ def plot_conjugate(resolution=100, pixelsize=350):
         dualpoint.change.emit();
         """
 
-    hover_events = [bokeh.events.MouseMove, bokeh.events.Tap]
-
     # hover over g.x-f(x)
-    for event in hover_events:
-        images[0].js_on_event(event, CustomJS(
-            args=js_args,
-            code=code_get_xg + """
-            hpoint.data['x'] = [x1];
-            hpoint.data['g'] = [g1];
-            hpoint.change.emit();        
-    
-            hline.data['x'] = [xx[0], xx[xx.length - 1]];
-            hline.data['g'] = [g1, g1];
-            hline.change.emit();
-            
-            primaltangent.data['x'] = [xx[0], xx[xx.length-1]];
-            primaltangent.data['y'] = primaltangent.data['x'].map(x => g1*x);
-            primaltangent.change.emit();
-    
-            primalheight.data['x'] = [x1,x1];
-            primalheight.data['y'] = [g1*x1, ff1];
-            primalheight.change.emit();
-            
-            dualheight.data['g'] = [g1, g1];
-            dualheight.data['y'] = [0, g1*x1-ff1];
-            dualheight.change.emit();
-            
-            dualgap.data['g'] = [g1, g1];
-            dualgap.data['y'] = [g1*x1-ff1, fc1];
-            dualgap.change.emit();
-            """
-        ))
+    primalimage_js = CustomJS(
+        args=js_args,
+        code=code_get_xg + """
+        hpoint.data['x'] = [x1];
+        hpoint.data['g'] = [g1];
+        hpoint.change.emit();        
+
+        hline.data['x'] = [xx[0], xx[xx.length - 1]];
+        hline.data['g'] = [g1, g1];
+        hline.change.emit();
+        
+        primaltangent.data['x'] = [xx[0], xx[xx.length-1]];
+        primaltangent.data['y'] = primaltangent.data['x'].map(x => g1*x);
+        primaltangent.change.emit();
+
+        primalheight.data['x'] = [x1,x1];
+        primalheight.data['y'] = [g1*x1, ff1];
+        primalheight.change.emit();
+        
+        dualheight.data['g'] = [g1, g1];
+        dualheight.data['y'] = [0, g1*x1-ff1];
+        dualheight.change.emit();
+        
+        dualgap.data['g'] = [g1, g1];
+        dualgap.data['y'] = [g1*x1-ff1, fc1];
+        dualgap.change.emit();
+        """
+    )
 
     # hover over g.x-f*(g)
+    dualimage_js = CustomJS(
+        args=js_args,
+        code=code_get_xg + """
+        vpoint.data['x'] = [x1];
+        vpoint.data['g'] = [g1];
+        vpoint.change.emit();   
+             
+        vline.data['x'] = [x1, x1];
+        vline.data['g'] = [gg[0], gg[gg.length - 1]];
+        vline.change.emit();
+        
+        dualtangent.data['g'] = [gg[0], gg[gg.length-1]];
+        dualtangent.data['y'] = dualtangent.data['g'].map(g => x1*g);
+        dualtangent.change.emit();
+        
+        dualheight.data['g'] = [g1,g1];
+        dualheight.data['y'] = [fc1, g1*x1];
+        dualheight.change.emit();
+
+        primalheight.data['x'] = [x1, x1];
+        primalheight.data['y'] = [0, g1*x1-fc1];
+        primalheight.change.emit();
+        
+        primalgap.data['x'] = [x1, x1];
+        primalgap.data['y'] = [g1*x1-fc1, ff1];
+        primalgap.change.emit();
+        """
+    )
+
+    hover_events = [bokeh.events.MouseMove, bokeh.events.Tap]
     for event in hover_events:
-        images[1].js_on_event(event, CustomJS(
-            args=js_args,
-            code=code_get_xg + """
-            vpoint.data['x'] = [x1];
-            vpoint.data['g'] = [g1];
-            vpoint.change.emit();   
-                 
-            vline.data['x'] = [x1, x1];
-            vline.data['g'] = [gg[0], gg[gg.length - 1]];
-            vline.change.emit();
-            
-            dualtangent.data['g'] = [gg[0], gg[gg.length-1]];
-            dualtangent.data['y'] = dualtangent.data['g'].map(g => x1*g);
-            dualtangent.change.emit();
-            
-            dualheight.data['g'] = [g1,g1];
-            dualheight.data['y'] = [fc1, g1*x1];
-            dualheight.change.emit();
-    
-            primalheight.data['x'] = [x1, x1];
-            primalheight.data['y'] = [0, g1*x1-fc1];
-            primalheight.change.emit();
-            
-            primalgap.data['x'] = [x1, x1];
-            primalgap.data['y'] = [g1*x1-fc1, ff1];
-            primalgap.change.emit();
-            """
-        ))
+        primalfig.js_on_event(event, primalhoverjs)
+        dualfig.js_on_event(event, dualhoverjs)
+        images[0].js_on_event(event, primalimage_js)
+        images[1].js_on_event(event, dualimage_js)
 
     # Remove all temporary glyphs on MouseLeave
     jsleave = CustomJS(
