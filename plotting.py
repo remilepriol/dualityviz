@@ -35,14 +35,13 @@ function set_range(fig, xx, yy, delta=0.1) {
     let ymin = Math.min(...yy);
     let deltax = delta * (xmax - xmin);
     let deltay = delta * (ymax - ymin);
-    
-    console.log(fig.name, fig.y_range.start, fig.y_range.end)
-    
     fig.x_range.start = xmin - deltax;
     fig.x_range.end = xmax + deltax;
     fig.y_range.start = ymin - deltay;
     fig.y_range.end = ymax + deltay;
-    console.log(fig.name, fig.y_range.start, fig.y_range.end)
+    console.log(fig)
+    fig.x_range.change.emit();
+    fig.y_range.change.emit();
 }
 set_range(primalfig, primal.data.xx, primal.data.ff);
 set_range(dualfig, dual.data.gg, dual.data.fc);
