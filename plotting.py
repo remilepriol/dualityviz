@@ -573,7 +573,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
             hline.data['g'] = [g1, g1];
             hline.change.emit();
             
-            primaltangent.data['x'] = [xx[0]-1000, xx[xx.length-1]+1000];
+            primaltangent.data['x'] = [xx[0], xx[xx.length-1]];
             primaltangent.data['y'] = primaltangent.data['x'].map(x => g1*x);
             primaltangent.change.emit();
     
@@ -604,7 +604,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
             vline.data['g'] = [gg[0], gg[gg.length - 1]];
             vline.change.emit();
             
-            dualtangent.data['g'] = [gg[0]-1000, gg[gg.length-1]+1000];
+            dualtangent.data['g'] = [gg[0], gg[gg.length-1]];
             dualtangent.data['y'] = dualtangent.data['g'].map(g => x1*g);
             dualtangent.change.emit();
             
