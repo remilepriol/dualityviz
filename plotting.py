@@ -239,9 +239,11 @@ def plot_conjugate(resolution=100, pixelsize=350):
         'vline': vline.data_source,
     }
 
-    source_dict = {
+    js_args = {
         'primal': primal_source,
         'dual': dual_source,
+        'primalfig': fig1,
+        'dualfig': fig2,
         **hover_source_dict
     }
 
@@ -253,7 +255,8 @@ def plot_conjugate(resolution=100, pixelsize=350):
     textinput_js = CustomJS(
         name='functionRefreshScript',
         args=dict(inputfunc=inputfunc, lower_x=lower_x, upper_x=upper_x, resolution=resolution,
-                  primal=primal_source, dual=dual_source, source2d=source2d),
+                  primal=primal_source, dual=dual_source, source2d=source2d,
+                  primalfig=fig1, dualfig=fig2),
         code="""  
         let xmin = +lower_x.value;
         let xmax = +upper_x.value;
@@ -406,7 +409,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
     # HOVERING
     # hover over primal plot
     primalhoverjs = CustomJS(
-        args=source_dict,
+        args=js_args,
         code="""
             let x0 = cb_obj.x;
             let y0 = cb_obj.y;
@@ -458,9 +461,9 @@ def plot_conjugate(resolution=100, pixelsize=350):
 
     # hover over dual plot
     dualhoverjs = CustomJS(
-        args=source_dict,
+        args=js_args,
         code="""
-            let g0 = cb_obj.x;
+            let g0  = cb_obj.x;
             let y0 = cb_obj.y;
             
             let gg = dual.data['gg'];
@@ -537,7 +540,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
     # hover over g.x-f(x)
     for event in hover_events:
         images[0].js_on_event(event, CustomJS(
-            args=source_dict,
+            args=js_args,
             code=code_get_xg + """
             hpoint.data['x'] = [x1];
             hpoint.data['g'] = [g1];
@@ -568,7 +571,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
     # hover over g.x-f*(g)
     for event in hover_events:
         images[1].js_on_event(event, CustomJS(
-            args=source_dict,
+            args=js_args,
             code=code_get_xg + """
             vpoint.data['x'] = [x1];
             vpoint.data['g'] = [g1];
