@@ -172,7 +172,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
     # plot gradients
     gradientfig = plotting.figure(title='Derivatives', **opts, tools='',
                                   x_axis_label='x', y_axis_label='g')
-    gradientfig.line('xopt', 'gg', source=dual_source, line_width=3, color=dualcolor)
+    gradientfig.line('xx', 'gopt', source=primal_source, color=primalcolor, alpha=.5, line_width=3)
     gradientfig.line('xx', 'grad', source=primal_source, color=primalcolor, line_width=3)
 
     # IMAGES
