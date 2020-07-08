@@ -121,7 +121,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
     opts = dict(plot_width=pixelsize, plot_height=pixelsize)
 
     # plot the primal function
-    primalfig = plotting.figure(title='Primal f(x)', **opts, tools='pan', name='primalfig',
+    primalfig = plotting.figure(title='Primal f(x)', **opts, tools='', name='primalfig',
                                 # tools='pan,wheel_zoom', active_scroll='wheel_zoom',
                                 x_axis_label='x', y_axis_label='y')
     primalfig.line('xx', 'fcc', source=primal_source, line_width=3, color=primalcolor, alpha=.5)
@@ -141,8 +141,8 @@ def plot_conjugate(resolution=100, pixelsize=350):
                                source=ColumnDataSource(dict(x=[], y=[])))
 
     # plot the dual function
-    dualfig = plotting.figure(title='Dual f*(g)', **opts, name='dualfig',
-                              tools='pan', x_axis_label='g', y_axis_label='y')
+    dualfig = plotting.figure(title='Dual f*(g)', **opts, tools='', name='dualfig',
+                              x_axis_label='g', y_axis_label='y')
     dual_line = dualfig.line('gg', 'fc', source=dual_source, line_width=3, color=dualcolor)
     dualfig.y_range.renderers = dualfig.x_range.renderers = [dual_line]
 
@@ -316,6 +316,9 @@ def plot_conjugate(resolution=100, pixelsize=350):
         
         let gmax = Math.max(...primal.data.grad);
         let gmin = Math.min(...primal.data.grad);
+        let delta_g = 0.1*(gmax-gmin);
+        gmax += delta_g;
+        gmin -= delta_g;
         let gg =  linspace(gmin,gmax,resolution);
         
         function customMax(array) {
@@ -389,7 +392,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
         'x^2 - cos(2 x)': ('x^2 - cos(2 x)', -5, 5),
         'sin(x)': ('sin(x)', -3.14, 0),
         'x sin(1/x)': ('x sin(1/x)', -1, 1),
-        'Entropy': ('x log(x) + (1-x) log(1-x)', 0, 1),
+        'Entropy': ('x log(x) + (1-x) log(1-x)', 0.00001, 1-0.00001),
         'Hinge': ('max(0, 1-x)', -2, 2),
         'Squared Hinge': ('max(0, 1-x)^2', -2, 2),
     }
