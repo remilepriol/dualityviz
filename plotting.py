@@ -27,6 +27,28 @@ def set_range(fig, xx, yy, delta=.1):
     fig.y_range = models.Range1d(min(yy) - deltay, max(yy) + deltay)
 
 
+js_set_range = """
+function set_range(fig, xx, yy, delta=0.1) {
+    let xmax = Math.max(...xx);
+    let ymax = Math.max(...yy);
+    let xmin = Math.min(...xx);
+    let ymin = Math.min(...yy);
+    let deltax = delta * (xmax - xmin);
+    let deltay = delta * (ymax - ymin);
+    
+    console.log(fig.name, fig.y_range.start, fig.y_range.end)
+    
+    fig.x_range.start = xmin - deltax;
+    fig.x_range.end = xmax + deltax;
+    fig.y_range.start = ymin - deltay;
+    fig.y_range.end = ymax + deltay;
+    console.log(fig.name, fig.y_range.start, fig.y_range.end)
+}
+set_range(primalfig, primal.data.xx, primal.data.ff);
+set_range(dualfig, dual.data.gg, dual.data.fc);
+"""
+
+
 def get_conjugate(ff, xrange, grange):
     # 2D array with all the combinations
     gx = grange[:, np.newaxis] * xrange[np.newaxis, :]
@@ -121,43 +143,43 @@ def plot_conjugate(resolution=100, pixelsize=350):
     opts = dict(plot_width=pixelsize, plot_height=pixelsize)
 
     # plot the primal function
-    fig1 = plotting.figure(title='Primal f(x)', **opts, tools='pan',
+    primalfig = plotting.figure(title='Primal f(x)', **opts, tools='pan', name='primalfig',
                            # tools='pan,wheel_zoom', active_scroll='wheel_zoom',
                            x_axis_label='x', y_axis_label='y')
-    fig1.line('xx', 'fcc', source=primal_source, line_width=3, color=primalcolor, alpha=.5)
-    fig1.line('xx', 'ff', source=primal_source, line_width=3, color=primalcolor)
+    primalfig.line('xx', 'fcc', source=primal_source, line_width=3, color=primalcolor, alpha=.5)
+    primalfig.line('xx', 'ff', source=primal_source, line_width=3, color=primalcolor)
 
     # temporary hovering glyphs
-    primalpoint = fig1.circle('x', 'y', size=10, color=tangentcolor,
+    primalpoint = primalfig.circle('x', 'y', size=10, color=tangentcolor,
                               source=ColumnDataSource(dict(x=[], y=[])))
-    primaltangent = fig1.line('x', 'y', line_width=2, color=tangentcolor,
+    primaltangent = primalfig.line('x', 'y', line_width=2, color=tangentcolor,
                               source=ColumnDataSource(dict(x=[], y=[])))
-    primaldroite = fig1.line('x', 'y', line_width=2, color='black',
+    primaldroite = primalfig.line('x', 'y', line_width=2, color='black',
                              source=ColumnDataSource(dict(x=[], y=[])))
-    primalheight = fig1.line('x', 'y', line_width=3, color=heightcolor, line_cap='round',
+    primalheight = primalfig.line('x', 'y', line_width=3, color=heightcolor, line_cap='round',
                              source=ColumnDataSource(dict(x=[], y=[])))
-    primalgap = fig1.line('x', 'y', line_width=3, color=gapcolor, line_dash='dotted',
+    primalgap = primalfig.line('x', 'y', line_width=3, color=gapcolor, line_dash='dotted',
                           source=ColumnDataSource(dict(x=[], y=[])))
 
     # plot the dual function
-    fig2 = plotting.figure(title='Dual f*(g)', **opts,
+    dualfig = plotting.figure(title='Dual f*(g)', **opts, name='dualfig',
                            tools='pan', x_axis_label='g', y_axis_label='y')
-    fig2.line('gg', 'fc', source=dual_source, line_width=3, color=dualcolor)
+    dualfig.line('gg', 'fc', source=dual_source, line_width=3, color=dualcolor)
 
     # temporary hovering glyphs
-    dualpoint = fig2.circle('g', 'y', size=10, color=tangentcolor, alpha=.7,
+    dualpoint = dualfig.circle('g', 'y', size=10, color=tangentcolor, alpha=.7,
                             source=ColumnDataSource(dict(g=[], y=[])))
-    dualtangent = fig2.line('g', 'y', line_width=2, color=tangentcolor,
+    dualtangent = dualfig.line('g', 'y', line_width=2, color=tangentcolor,
                             source=ColumnDataSource(dict(g=[], y=[])))
-    dualdroite = fig2.line('g', 'y', line_width=2, color='black',
+    dualdroite = dualfig.line('g', 'y', line_width=2, color='black',
                            source=ColumnDataSource(dict(g=[], y=[])))
-    dualheight = fig2.line('g', 'y', line_width=3, color=heightcolor, line_cap='round',
+    dualheight = dualfig.line('g', 'y', line_width=3, color=heightcolor, line_cap='round',
                            source=ColumnDataSource(dict(g=[], y=[])))
-    dualgap = fig2.line('g', 'y', line_width=3, color=gapcolor, line_dash='dotted',
+    dualgap = dualfig.line('g', 'y', line_width=3, color=gapcolor, line_dash='dotted',
                         source=ColumnDataSource(dict(g=[], y=[])))
 
     # highlight lines x=0 and y=0 in primal and dual plots
-    for fig in [fig1, fig2]:
+    for fig in [primalfig, dualfig]:
         for dimension in [0, 1]:
             grid0 = models.Grid(dimension=dimension, grid_line_color='black',
                                 ticker=models.FixedTicker(ticks=[0]))
@@ -168,10 +190,10 @@ def plot_conjugate(resolution=100, pixelsize=350):
     # fig1.add_layout(infolabel)
 
     # plot gradients
-    fig3 = plotting.figure(title='Derivatives', **opts, tools='',
+    gradientfig = plotting.figure(title='Derivatives', **opts, tools='',
                            x_axis_label='x', y_axis_label='g')
-    fig3.line('xopt', 'gg', source=dual_source, line_width=3, color=dualcolor)
-    fig3.line('xx', 'grad', source=primal_source, color=primalcolor, line_width=3)
+    gradientfig.line('xopt', 'gg', source=dual_source, line_width=3, color=dualcolor)
+    gradientfig.line('xx', 'grad', source=primal_source, color=primalcolor, line_width=3)
 
     # IMAGES
     images = [plotting.figure(**opts, tools='', x_axis_label='x', y_axis_label='g') for _ in
@@ -214,7 +236,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
     vline = images[1].add_glyph(ColumnDataSource(data=dict(x=[], g=[])), gxline)
     vpoint = images[1].add_glyph(ColumnDataSource(data=dict(x=[], g=[])), gxcircle)
 
-    for fig in [fig3, images[2]]:
+    for fig in [gradientfig, images[2]]:
         fig.add_glyph(hpoint.data_source, gxcircle)
         fig.add_glyph(vpoint.data_source, gxcircle)
 
@@ -242,8 +264,8 @@ def plot_conjugate(resolution=100, pixelsize=350):
     js_args = {
         'primal': primal_source,
         'dual': dual_source,
-        'primalfig': fig1,
-        'dualfig': fig2,
+        'primalfig': primalfig,
+        'dualfig': dualfig,
         **hover_source_dict
     }
 
@@ -256,7 +278,7 @@ def plot_conjugate(resolution=100, pixelsize=350):
         name='functionRefreshScript',
         args=dict(inputfunc=inputfunc, lower_x=lower_x, upper_x=upper_x, resolution=resolution,
                   primal=primal_source, dual=dual_source, source2d=source2d,
-                  primalfig=fig1, dualfig=fig2),
+                  primalfig=primalfig, dualfig=dualfig),
         code="""  
         let xmin = +lower_x.value;
         let xmax = +upper_x.value;
@@ -455,9 +477,10 @@ def plot_conjugate(resolution=100, pixelsize=350):
             vline.data['g'] = [gg[0], gg[gg.length - 1]];
             vline.change.emit();
             """
+             + js_set_range
     )
-    fig1.js_on_event(bokeh.events.MouseMove, primalhoverjs)
-    fig1.js_on_event(bokeh.events.Tap, primalhoverjs)
+    primalfig.js_on_event(bokeh.events.MouseMove, primalhoverjs)
+    primalfig.js_on_event(bokeh.events.Tap, primalhoverjs)
 
     # hover over dual plot
     dualhoverjs = CustomJS(
@@ -507,9 +530,10 @@ def plot_conjugate(resolution=100, pixelsize=350):
             hline.data['g'] = [g1, g1];
             hline.change.emit();
             """
+             + js_set_range
     )
-    fig2.js_on_event(bokeh.events.MouseMove, dualhoverjs)
-    fig2.js_on_event(bokeh.events.Tap, dualhoverjs)
+    dualfig.js_on_event(bokeh.events.MouseMove, dualhoverjs)
+    dualfig.js_on_event(bokeh.events.Tap, dualhoverjs)
 
     # Hover over X,G plots
     code_get_xg = """
@@ -611,14 +635,14 @@ def plot_conjugate(resolution=100, pixelsize=350):
             }
             """
     )
-    for fig in [fig1, fig2, fig3] + images:
+    for fig in [primalfig, dualfig, gradientfig] + images:
         fig.js_on_event(bokeh.events.MouseLeave, jsleave)
 
     bigfig = layouts.column([
         layouts.row([inputfunc, lower_x, upper_x]),
         radio_function_selection,
         layouts.gridplot([
-            [fig1, fig2, fig3],
+            [primalfig, dualfig, gradientfig],
             images,
         ], toolbar_location=None)
     ])
