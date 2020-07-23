@@ -170,30 +170,59 @@
 
 
     function render() {
-        drawGrid(primalCanvas, primalContext, scale)
-        drawGrid(dualCanvas, dualContext, scale)
+        drawGrid(primalCanvas, primalContext, scale);
+        drawGrid(dualCanvas, dualContext, scale);
 
-        drawSnake(primalCanvas, primalContext, [...points].reverse())
-        drawSnake(dualCanvas, dualContext, computeDualPoints(points, "polar").reverse())
+        smoothPoints = smoothCurve(points);
+        drawSnake(primalCanvas, primalContext, [...smoothPoints].reverse());
+        drawSnake(dualCanvas, dualContext, computeDualPoints(smoothPoints, "polar").reverse());
 
-        requestAnimationFrame(render) // keep redrawing ?
+        requestAnimationFrame(render); // keep redrawing ?
     }
 
     render()
 
+    function smoothCurve(points) {
+        // convolve with some kernel
+        // ideally do this at event time
+        // or vary kernel size with line size
+        let kernel = [.8, .6, .4, .2, .1];
+
+        let newPoints = [];
+        for (let i = 0; i < points.length; i++) {
+            let p = points[i].slice();
+            let sum = 1;
+            for (let j = 0; j < kernel.length; j++) {
+                if (i - j - 1 > 0) {
+                    p[0] += kernel[j] * points[i - j - 1][0];
+                    p[1] += kernel[j] * points[i - j - 1][1];
+                    sum += kernel[j]
+                }
+                if (i + j + 1 < points.length) {
+                    p[0] += kernel[j] * points[i + j + 1][0];
+                    p[1] += kernel[j] * points[i + j + 1][1];
+                    sum += kernel[j]
+                }
+            }
+            p[0] /= sum;
+            p[1] /= sum;
+            newPoints.push(p)
+        }
+        return newPoints
+    }
+
 
     function computeDualPoints(points, transform = "y=ax+b") {
-        // TODO smooth the primal curve, because the jittering movement makes
-        // the line between consecutive points extremely noisy.
         console.log(points.length)
         let dualPoints = [];
+
         // get a representation for each segment of the primal line
         for (let i = 0; i < points.length - 1; i++) {
             let prev = points[i];
             let curr = points[i + 1];
 
-            let distance = (curr[0] - prev[0])**2 + (curr[1] - prev[1])**2;
-            if (distance<1e-6) continue;
+            let distance = (curr[0] - prev[0]) ** 2 + (curr[1] - prev[1]) ** 2;
+            if (distance < 1e-6) continue;
 
             let det = curr[1] * prev[0] - curr[0] * prev[1];
             let a = (curr[1] - prev[1]) / det;
@@ -219,7 +248,7 @@
                         dualPoints.push([0, 0]);
                         break;
                     }
-                    let norm = a**2 + b**2;
+                    let norm = a ** 2 + b ** 2;
                     a /= norm;
                     b /= norm;
                     // console.log(det, norm, a, b)
@@ -269,6 +298,7 @@
         for (let i = 1; i < snakePoints.length; i++) {
             let prev = snakePoints[i - 1]
             let curr = snakePoints[i]
+            // TODO match color of the dual line with corresponding segment of the primal line
             ctx.strokeStyle = `hsl(${i / snakePoints.length * 360}, 60%, 55%)`
             ctx.lineWidth = Math.round(map(i - 1, 0, points.length, 15, 3))
             if (tipCol == null) tipCol = ctx.strokeStyle;
