@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<!-- saved from url=(0023)https://soap.spacie.me/ -->
+<html lang="en" dir="ltr">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <title>Dual Snakes</title>
+    <style media="screen">
+        @import url('https://fonts.googleapis.com/css?family=Quicksand');
+
+        * {
+            font-family: 'Quicksand', sans-serif;
+            outline: none; /* Sorry :( */
+            box-sizing: border-box;
+        }
+
+        body {
+            text-align: center;
+        }
+
+        .app {
+            display: inline-grid;
+            text-align: left;
+            grid-template-columns: auto 1fr;
+            grid-template-areas: "edit canvas";
+        }
+
+        p, input {
+            font-size: 20px;
+        }
+
+        input[type='range'] {
+            width: 250px;
+        }
+
+        .app > * {
+            padding: 20px;
+        }
+
+        canvas {
+            background: #eee;
+            border-radius: 10px;
+            /*width: 600px;*/
+            /*height: 600px;*/
+        }
+
+        td {
+            padding: 10px;
+        }
+
+        .canvas-side p {
+            opacity: 0.5;
+        }
+
+        h1 {
+            border-bottom: 1px solid #000;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #777777;
+        }
+
+    </style>
+    <!-- maths for the viz   -->
+</head>
+<body>
+
+<div class="app">
+    <div class="edit">
+        <h1>Dual Snakes</h1>
+        <h2>Built upon <a href="https://soap.spacie.me/">SOAP</a></h2>
+        <table>
+            <tbody>
+            <tr>
+                <td>
+                    Scale:
+                </td>
+                <td>
+                    <input type="range" value="2" min="1" max="10" step="0.01" id="scale">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <br>
+    <div class="canvas-side">
+        <p>Primal. Use your mouse or finger to put some snakes on the plane</p>
+        <canvas id="primal"></canvas>
+    </div>
+    <div class="canvas-side">
+        <p>Dual</p>
+        <canvas id="dual"></canvas>
+    </div>
+</div>
+
+
+<script>
+
+    function map(x, inMin, inMax, outMin, outMax) {
+        return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin
+    }
+
+    let width = 600;
+
+    const primalCanvas = document.getElementById("primal")
+    const dualCanvas = document.getElementById("dual")
+    for (let cvs of [primalCanvas, dualCanvas]) {
+        cvs.width = cvs.height = width;
+    }
+
+    const primalContext = primalCanvas.getContext('2d')
+    const dualContext = dualCanvas.getContext("2d")
+    console.log(primalContext)
+
+    let scale = 2
+    document.querySelector('#scale').addEventListener('input', e => {
+        // Parsing the input after forcing it to a string is a hack that seems to fix issues?
+        scale = parseFloat(`${e.target.value}`)
+    })
+
+    let points = []
+    let touching = false
+
+    primalCanvas.addEventListener('touchstart', e => {
+        e.preventDefault()
+        if (e.target != primalCanvas) return
+        points = []
+        touching = true
+    })
+
+    primalCanvas.addEventListener('mousedown', e => {
+        if (e.target != primalCanvas) return
+        points = []
+        touching = true
+    })
+
+    primalCanvas.addEventListener('touchmove', e => {
+        e.preventDefault()
+        if (e.target != primalCanvas) return
+        let t = null
+        for (const touch of e.touches) {
+            if (touch.target == primalCanvas) t = touch
+        }
+        if (!touching || t == null) return
+        const box = primalCanvas.getBoundingClientRect()
+        const x = t.clientX - box.left
+        const y = t.clientY - box.top
+        points.push([map(x, 0, primalCanvas.width, -scale, scale), map(y, 0, primalCanvas.width, scale, -scale)])
+    })
+
+    primalCanvas.addEventListener('mousemove', e => {
+        if (!touching) return
+        const box = primalCanvas.getBoundingClientRect()
+        const x = e.clientX - box.left
+        const y = e.clientY - box.top
+        points.push([map(x, 0, primalCanvas.width, -scale, scale), map(y, 0, primalCanvas.width, scale, -scale)])
+    })
+
+    primalCanvas.addEventListener('touchend', e => {
+        e.preventDefault()
+        if (e.target != primalCanvas) return
+        touching = false
+    })
+
+    primalCanvas.addEventListener('mouseup', e => {
+        if (e.target != primalCanvas) return
+        touching = false
+    })
+
+
+    function render() {
+        drawGrid(primalCanvas, primalContext, scale)
+        drawGrid(dualCanvas, dualContext, scale)
+
+        drawSnake(primalCanvas, primalContext, [...points].reverse())
+        drawSnake(dualCanvas, dualContext, computeDualPoints(points, "polar").reverse())
+
+        requestAnimationFrame(render) // keep redrawing ?
+    }
+
+    render()
+
+
+    function computeDualPoints(points, transform = "y=ax+b") {
+        // TODO smooth the primal curve, because the jittering movement makes
+        // the line between consecutive points extremely noisy.
+        console.log(points.length)
+        let dualPoints = [];
+        // get a representation for each segment of the primal line
+        for (let i = 0; i < points.length - 1; i++) {
+            let prev = points[i];
+            let curr = points[i + 1];
+
+            let distance = (curr[0] - prev[0])**2 + (curr[1] - prev[1])**2;
+            if (distance<1e-6) continue;
+
+            let det = curr[1] * prev[0] - curr[0] * prev[1];
+            let a = (curr[1] - prev[1]) / det;
+            let b = -(curr[0] - prev[0]) / det;
+
+            switch (transform) {
+                case "y=ax+b":
+                    // Legendre transform
+                    let slope = (curr[1] - prev[1]) / (curr[0] - prev[0]);
+                    let intercept = curr[1] - slope * curr[0];
+
+                    a = slope;
+                    b = -intercept;
+                    break;
+
+                case "ax+by=1":
+                    // Cramer formula
+                    break;
+                case "polar":
+                    // X cos theta + Y sin theta = lambda
+                    // shortest vector from (0,0) to the line
+                    if (Math.hypot(det) < 1e-8) {
+                        dualPoints.push([0, 0]);
+                        break;
+                    }
+                    let norm = a**2 + b**2;
+                    a /= norm;
+                    b /= norm;
+                    // console.log(det, norm, a, b)
+                    break;
+            }
+            dualPoints.push([a, b]);
+
+        }
+        return dualPoints
+    }
+
+    function drawGrid(cvs, ctx, scale) {
+        ctx.clearRect(0, 0, width, width)
+        for (let x = 0; x < width / 2; x += (width / 2 / scale)) {
+            ctx.lineWidth = 1
+            ctx.strokeStyle = '#ccc'
+            ctx.beginPath()
+            ctx.moveTo(width / 2 + x, 0)
+            ctx.lineTo(width / 2 + x, width)
+            ctx.moveTo(width / 2 - x, 0)
+            ctx.lineTo(width / 2 - x, width)
+            ctx.moveTo(0, width / 2 + x)
+            ctx.lineTo(width, width / 2 + x)
+            ctx.moveTo(0, width / 2 - x)
+            ctx.lineTo(width, width / 2 - x)
+            ctx.stroke()
+        }
+        ctx.lineWidth = 2
+        ctx.lineCap = 'round'
+        ctx.strokeStyle = '#aaa'
+        ctx.beginPath()
+        ctx.moveTo(0, width / 2)
+        ctx.lineTo(width, width / 2)
+        ctx.moveTo(width / 2, 0)
+        ctx.lineTo(width / 2, width);
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.arc(width / 2, cvs.height / 2, width / (scale * 2), 0, Math.PI * 2)
+        ctx.stroke()
+    }
+
+    function drawSnake(cvs, ctx, snakePoints) {
+
+        let tipCol = null
+
+        // Draw the actual snake body
+        for (let i = 1; i < snakePoints.length; i++) {
+            let prev = snakePoints[i - 1]
+            let curr = snakePoints[i]
+            ctx.strokeStyle = `hsl(${i / snakePoints.length * 360}, 60%, 55%)`
+            ctx.lineWidth = Math.round(map(i - 1, 0, points.length, 15, 3))
+            if (tipCol == null) tipCol = ctx.strokeStyle;
+            ctx.beginPath()
+            ctx.moveTo(map(prev[0], -scale, scale, 0, width), map(prev[1], scale, -scale, 0, width))
+            ctx.lineTo(map(curr[0], -scale, scale, 0, width), map(curr[1], scale, -scale, 0, width))
+            ctx.stroke()
+        }
+
+        // Draw eyes and stuff, yes it's long, no I don't know what I'm doing...
+        if (snakePoints.length < 2) return
+        let startPoint = snakePoints[0].map(x => map(x, -scale, scale, 0, width))
+        let secondPoint = snakePoints[1].map(x => map(x, -scale, scale, 0, width))
+        startPoint[1] = width - startPoint[1]
+        secondPoint[1] = width - secondPoint[1]
+        const dx = secondPoint[0] - startPoint[0]
+        const dy = secondPoint[1] - startPoint[1]
+        const ang = -Math.atan2(dy, dx)
+        const tang = Math.atan2(dy, dx)
+        ctx.lineWidth = 3
+        ctx.strokeStyle = tipCol
+        ctx.beginPath()
+        let len = 15
+        let tipX = startPoint[0] - Math.cos(tang) * len
+        let tipY = startPoint[1] - Math.sin(tang) * len
+        ctx.moveTo(startPoint[0], startPoint[1])
+        ctx.lineTo(tipX, tipY)
+        ctx.moveTo(tipX, tipY)
+        ctx.lineTo(tipX - Math.cos(tang - 0.5) * len / 2, tipY - Math.sin(tang - 0.5) * len / 2)
+        ctx.moveTo(tipX, tipY)
+        ctx.lineTo(tipX - Math.cos(tang + 0.5) * len / 2, tipY - Math.sin(tang + 0.5) * len / 2)
+        ctx.stroke()
+        ctx.fillStyle = '#fff'
+        ctx.beginPath()
+        ctx.arc(startPoint[0] + Math.sin(ang) * 5, startPoint[1] + Math.cos(ang) * 4, 3, 0, Math.PI * 2)
+        ctx.arc(startPoint[0] - Math.sin(ang) * 5, startPoint[1] - Math.cos(ang) * 4, 3, 0, Math.PI * 2)
+        ctx.fill()
+    }
+
+</script>
+
+
+</body>
+</html>
