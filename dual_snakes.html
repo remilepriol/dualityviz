@@ -175,7 +175,11 @@
 
         smoothPoints = smoothCurve(points);
         drawSnake(primalCanvas, primalContext, [...smoothPoints].reverse());
-        drawSnake(dualCanvas, dualContext, computeDualPoints(smoothPoints, "polar").reverse());
+        pp = smoothPoints
+        for (let i = 0; i < 1; i++) {
+            pp = computeDualPoints(pp, "polar")
+            drawSnake(dualCanvas, dualContext, pp.reverse());
+        }
 
         requestAnimationFrame(render); // keep redrawing ?
     }
@@ -183,25 +187,20 @@
     render()
 
     function smoothCurve(points) {
-        // convolve with some kernel
-        // ideally do this at event time
-        // or vary kernel size with line size
+        // convolve points with some kernel
         let kernel = [.8, .6, .4, .2, .1];
+        let sum = 1;
+        for (let e of kernel) {
+            sum += 2 * e;
+        }
 
         let newPoints = [];
         for (let i = 0; i < points.length; i++) {
             let p = points[i].slice();
-            let sum = 1;
             for (let j = 0; j < kernel.length; j++) {
-                if (i - j - 1 > 0) {
-                    p[0] += kernel[j] * points[i - j - 1][0];
-                    p[1] += kernel[j] * points[i - j - 1][1];
-                    sum += kernel[j]
-                }
-                if (i + j + 1 < points.length) {
-                    p[0] += kernel[j] * points[i + j + 1][0];
-                    p[1] += kernel[j] * points[i + j + 1][1];
-                    sum += kernel[j]
+                for (let k = 0; k < 2; k++) {
+                    p[k] += kernel[j] * (points[Math.max(0, i - j - 1)][k]
+                        + points[Math.min(points.length - 1, i + j + 1)][k]);
                 }
             }
             p[0] /= sum;
@@ -222,13 +221,18 @@
             let curr = points[i + 1];
 
             let distance = (curr[0] - prev[0]) ** 2 + (curr[1] - prev[1]) ** 2;
-            if (distance < 1e-6) continue;
+            if (distance < 1e-6) {
+                if (dualPoints.length > 0) {
+                    dualPoints.push(dualPoints[dualPoints.length - 1].slice())
+                }
+                continue;
+            }
 
             let det = curr[1] * prev[0] - curr[0] * prev[1];
-            let a = (curr[1] - prev[1]) / det;
-            let b = -(curr[0] - prev[0]) / det;
+            let a, b;
 
             switch (transform) {
+                case "legendre":
                 case "y=ax+b":
                     // Legendre transform
                     let slope = (curr[1] - prev[1]) / (curr[0] - prev[0]);
@@ -240,18 +244,16 @@
 
                 case "ax+by=1":
                     // Cramer formula
+                    a = (curr[1] - prev[1]) / det;
+                    b = -(curr[0] - prev[0]) / det;
                     break;
+
                 case "polar":
+                case "theta, lambda":
                     // X cos theta + Y sin theta = lambda
                     // shortest vector from (0,0) to the line
-                    if (Math.hypot(det) < 1e-8) {
-                        dualPoints.push([0, 0]);
-                        break;
-                    }
-                    let norm = a ** 2 + b ** 2;
-                    a /= norm;
-                    b /= norm;
-                    // console.log(det, norm, a, b)
+                    a = det * (curr[1] - prev[1]) / distance
+                    b = -det * (curr[0] - prev[0]) / distance
                     break;
             }
             dualPoints.push([a, b]);
