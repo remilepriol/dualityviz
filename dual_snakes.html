@@ -9,20 +9,31 @@
         @import url('https://fonts.googleapis.com/css?family=Quicksand');
 
         * {
-            font-family: 'Quicksand', sans-serif;
-            outline: none; /* Sorry :( */
-            box-sizing: border-box;
-        }
-
-        body {
-            text-align: center;
+            font-family: 'Arial', sans-serif;
+            /*box-sizing: border-box;*/
+            margin-top: 10px;
+            margin-bottom: 10px;
+            margin-left: 5px;
+            margin-right: 5px;
         }
 
         .app {
             display: inline-grid;
             text-align: left;
-            grid-template-columns: auto 1fr;
-            grid-template-areas: "edit canvas";
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto;
+            grid-row-gap: 0px;
+            grid-template-areas: "edit edit" "canvas1 canvas2" "footer footer";
+            padding:20px
+        }
+
+        .edit {
+            grid-area: edit;
+        }
+
+        h1 {
+            border-bottom: 1px solid #000;
+            padding-bottom: 10px;
         }
 
         p, input {
@@ -33,32 +44,22 @@
             width: 250px;
         }
 
-        .app > * {
-            padding: 20px;
+        .canvas-title{
+            color: #777777;
+            font-size: 24px;
+            font-weight: 900;
         }
 
         canvas {
             background: #eee;
             border-radius: 10px;
-            /*width: 600px;*/
-            /*height: 600px;*/
         }
 
-        td {
-            padding: 10px;
-        }
-
-        .canvas-side p {
-            opacity: 0.5;
-        }
-
-        h1 {
-            border-bottom: 1px solid #000;
-            padding-bottom: 10px;
-        }
-
-        h2 {
+        footer {
+            grid-area: footer;
             color: #777777;
+            text-align: center;
+            font-size: 10px;
         }
 
     </style>
@@ -69,29 +70,31 @@
 <div class="app">
     <div class="edit">
         <h1>Dual Snakes</h1>
-        <h2>Built upon <a href="https://soap.spacie.me/">SOAP</a></h2>
-        <table>
-            <tbody>
-            <tr>
-                <td>
-                    Scale:
-                </td>
-                <td>
-                    <input type="range" value="2" min="1" max="10" step="0.01" id="scale">
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <p>Scale:
+            <input type="range" value="2" min="1" max="10" step="0.01" id="scale">
+        </p>
+        <p>
+            Dual Parametrization
+            <input type="radio" id="y=ax+b" name="parametrization" value="y=ax+b" checked>
+            <label for="y=ax+b">y=ax+b, Fenchel</label>
+            <input type="radio" id="ax+by=1" name="parametrization" value="ax+by=1">
+            <label for="ax+by=1">ax+by=1</label>
+            <input type="radio" id="polar" name="parametrization" value="polar">
+            <label for="polar">ax+by = a^2 + b^2, polar</label>
+        </p>
     </div>
-    <br>
-    <div class="canvas-side">
-        <p>Primal. Use your mouse or finger to put some snakes on the plane</p>
-        <canvas id="primal"></canvas>
+    <div class="canvas-side" style="grid-area: canvas1">
+        <span class="canvas-title">Primal</span>
+        <span style="opacity: 0.5; font-size: 16px">Use your mouse or finger to put some snakes on the plane</span>
+        <br><canvas id="primal"></canvas>
     </div>
-    <div class="canvas-side">
-        <p>Dual</p>
-        <canvas id="dual"></canvas>
+    <div class="canvas-side" style="grid-area: canvas2">
+        <span class="canvas-title">Dual</span>
+        <br><canvas id="dual"></canvas>
     </div>
+    <footer><p>
+        Built by Remi Le Priol upon https://soap.spacie.me/
+    </p></footer>
 </div>
 
 
@@ -175,9 +178,12 @@
 
         smoothPoints = smoothCurve(points);
         drawSnake(primalCanvas, primalContext, [...smoothPoints].reverse());
+
+        let parametrization = document.querySelector('input[name="parametrization"]:checked').value
+
         pp = smoothPoints
         for (let i = 0; i < 1; i++) {
-            pp = computeDualPoints(pp, "polar")
+            pp = computeDualPoints(pp, parametrization)
             drawSnake(dualCanvas, dualContext, pp.reverse());
         }
 
@@ -212,7 +218,6 @@
 
 
     function computeDualPoints(points, transform = "y=ax+b") {
-        console.log(points.length)
         let dualPoints = [];
 
         // get a representation for each segment of the primal line
@@ -232,7 +237,7 @@
             let a, b;
 
             switch (transform) {
-                case "legendre":
+                case "fenchel":
                 case "y=ax+b":
                     // Legendre transform
                     let slope = (curr[1] - prev[1]) / (curr[0] - prev[0]);
@@ -242,6 +247,7 @@
                     b = -intercept;
                     break;
 
+                case "cramer":
                 case "ax+by=1":
                     // Cramer formula
                     a = (curr[1] - prev[1]) / det;
@@ -249,7 +255,7 @@
                     break;
 
                 case "polar":
-                case "theta, lambda":
+                case "ax+by=a^2+b^2":
                     // X cos theta + Y sin theta = lambda
                     // shortest vector from (0,0) to the line
                     a = det * (curr[1] - prev[1]) / distance
