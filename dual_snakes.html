@@ -79,8 +79,8 @@
         </p>
         <p>
             Dual Parametrization
-            <input type="radio" id="y=ax+b" name="parametrization" value="y=ax+b" checked>
-            <label for="y=ax+b">y=ax+b, Fenchel</label>
+            <input type="radio" id="y=ax-b" name="parametrization" value="y=ax-b" checked>
+            <label for="y=ax-b">y=ax-b, Fenchel</label>
             <input type="radio" id="ax+by=1" name="parametrization" value="ax+by=1">
             <label for="ax+by=1">ax+by=1</label>
             <input type="radio" id="polar" name="parametrization" value="polar">
@@ -90,11 +90,11 @@
     <div class="canvas-side" style="grid-area: canvas1; align-self: end;">
         <span class="canvas-title">Primal</span>
         <span style="opacity: 0.5; font-size: 16px">Use your mouse or finger to put some snakes on the plane</span>
-        <br><canvas id="primal"></canvas>
+        <br><canvas id="primal">Primal plane where you can draw any curvy snake.</canvas>
     </div>
     <div class="canvas-side" style="grid-area: canvas2; align-self: end;">
         <span class="canvas-title">Dual</span>
-        <br><canvas id="dual"></canvas>
+        <br><canvas id="dual">Dual plane where the dual snake will appear.</canvas>
     </div>
     <footer><p>
         Built by <a href="https://remilepriol.github.io/">Remi Le Priol</a> upon <a href="https://soap.spacie.me/">https://soap.spacie.me/</a>. <br>
@@ -179,8 +179,8 @@
 
 
     function render() {
-        drawGrid(primalCanvas, primalContext, scale);
-        drawGrid(dualCanvas, dualContext, scale);
+        drawGrid(primalCanvas, primalContext, scale, "x","y");
+        drawGrid(dualCanvas, dualContext, scale,"a","b");
 
         smoothPoints = smoothCurve(points);
         drawSnake(primalCanvas, primalContext, [...smoothPoints].reverse());
@@ -189,11 +189,11 @@
 
         pp = smoothPoints
         for (let i = 0; i < 1; i++) {
-            pp = computeDualPoints(pp, parametrization)
+            pp = computeDualPoints(pp, parametrization);
             drawSnake(dualCanvas, dualContext, pp.reverse());
         }
 
-        requestAnimationFrame(render); // keep redrawing ?
+        window.requestAnimationFrame(render);
     }
 
     render()
@@ -223,7 +223,7 @@
     }
 
 
-    function computeDualPoints(points, transform = "y=ax+b") {
+    function computeDualPoints(points, transform = "y=ax-b") {
         let dualPoints = [];
 
         // get a representation for each segment of the primal line
@@ -244,7 +244,7 @@
 
             switch (transform) {
                 case "fenchel":
-                case "y=ax+b":
+                case "y=ax-b":
                     // Legendre transform
                     let slope = (curr[1] - prev[1]) / (curr[0] - prev[0]);
                     let intercept = curr[1] - slope * curr[0];
@@ -274,7 +274,7 @@
         return dualPoints
     }
 
-    function drawGrid(cvs, ctx, scale) {
+    function drawGrid(cvs, ctx, scale, xLabel, yLabel) {
         ctx.clearRect(0, 0, width, width)
         for (let x = 0; x < width / 2; x += (width / 2 / scale)) {
             ctx.lineWidth = 1
@@ -293,12 +293,30 @@
         ctx.lineWidth = 2
         ctx.lineCap = 'round'
         ctx.strokeStyle = '#aaa'
+        let arrowSize = 0.04;
+        ctx.font = "30px Arial";
+        ctx.fillStyle = "#666";
         ctx.beginPath()
-        ctx.moveTo(0, width / 2)
-        ctx.lineTo(width, width / 2)
+
+        // horizontal line and arrow head
+        ctx.moveTo(0, width / 2);
+        ctx.lineTo(width, width / 2);
+        ctx.lineTo((1-arrowSize)*width, (1-arrowSize)*width/2);
+        ctx.moveTo(width, width / 2);
+        ctx.lineTo((1-arrowSize)*width, (1+arrowSize)*width/2);
+        ctx.fillText(xLabel, (1-arrowSize)*width - 20, (1+arrowSize)*width/2 + 10);
+
+        // vertical line and arrow head
         ctx.moveTo(width / 2, 0)
         ctx.lineTo(width / 2, width);
+        ctx.moveTo(width / 2, 0)
+        ctx.lineTo((1-arrowSize)*width/2, arrowSize*width)
+        ctx.moveTo(width / 2, 0)
+        ctx.lineTo((1+arrowSize)*width/2, arrowSize*width)
+        ctx.fillText(yLabel, (1-arrowSize)*width/2 - 20, (arrowSize)*width + 10);
+
         ctx.stroke()
+
         ctx.beginPath()
         ctx.arc(width / 2, cvs.height / 2, width / (scale * 2), 0, Math.PI * 2)
         ctx.stroke()
