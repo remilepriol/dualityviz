@@ -41,7 +41,9 @@
         .remark {
             color: #777777;
             font-size: 16px;
-            text-indent: 5%;
+            padding-left: 30px;
+            margin-top: 3px;
+            margin-bottom: 3px;
         }
 
         .canvas-side {
@@ -52,6 +54,7 @@
             color: #777777;
             font-size: 24px;
             font-weight: 900;
+            margin-bottom: 5px;
         }
 
         canvas {
@@ -108,14 +111,13 @@
     <!--              TODO add a checkbox to display convex envelope and corresponding dual. Two kinds of envelope: full envelope and lower envelope.-->
 
     <div class="canvas-side" style="grid-area: canvas1;">
-        <span class="canvas-title">Primal</span>
-        <span class="remark">Use your mouse or finger to put some snakes on the plane</span>
-        <br>
+        <h3 class="canvas-title">Primal</h3>
+        <p class="remark">Use your mouse or finger to put some snakes on the plane</p>
         <canvas id="primal">Primal plane where you can draw any curvy snake.</canvas>
     </div>
     <div class="canvas-side" style="grid-area: canvas2;">
-        <span class="canvas-title">Dual</span>
-        <br>
+        <h3 class="canvas-title">Dual</h3>
+        <p class="remark">Click to reveal the dual point - primal line correspondence</p>
         <canvas id="dual">Dual plane where the dual snake will appear.</canvas>
     </div>
     <footer><p style="font-size: 16px">
