@@ -156,6 +156,7 @@
     let curve = [];
     let touching = false;
     let dualPoints=[];
+    let dualRadius = 10;
 
     primalCanvas.addEventListener('touchstart', e => {
         e.preventDefault()
@@ -207,9 +208,19 @@
 
     dualCanvas.addEventListener('click', e => {
         const box = dualCanvas.getBoundingClientRect();
-        const x = e.clientX - box.left;
-        const y = e.clientY - box.top;
-        dualPoints.push([map(x, 0, primalCanvas.width, -scale, scale), map(y, 0, primalCanvas.width, scale, -scale)]);
+        let screenX = e.clientX - box.left;
+        let screenY = e.clientY - box.top;
+        let x = map(screenX, 0, width, -scale, scale);
+        let y = map(screenY, 0, width, scale, -scale)
+
+        for (let i=0; i<dualPoints.length; i++){
+            let p = dualPoints[i];
+            if (((screenX - p[2])**2 + (screenY - p[3])**2) < dualRadius**2){
+                dualPoints.splice(i,1);
+                return;
+            }
+        }
+        dualPoints.push([x, y, screenX, screenY]);
     })
 
     function render(timeStamp) {
@@ -242,7 +253,7 @@
 
     function drawBlackPoint(ctx, dualPoint){
         ctx.fillStyle = 'hsla(0, 100%, 0%, 0.7)'
-        drawPoint(ctx, dualPoint, 10)
+        drawPoint(ctx, dualPoint, dualRadius)
     }
 
     function drawPrimalLine(ctx, dualPoint, parametrization){
