@@ -155,6 +155,7 @@
 
     let curve = [];
     let touching = false;
+    let dualPoints=[];
 
     primalCanvas.addEventListener('touchstart', e => {
         e.preventDefault()
@@ -188,6 +189,8 @@
         const box = primalCanvas.getBoundingClientRect()
         const x = e.clientX - box.left
         const y = e.clientY - box.top
+
+
         curve.push([map(x, 0, primalCanvas.width, -scale, scale), map(y, 0, primalCanvas.width, scale, -scale)])
     })
 
@@ -200,6 +203,13 @@
     primalCanvas.addEventListener('mouseup', e => {
         if (e.target != primalCanvas) return
         touching = false
+    })
+
+    dualCanvas.addEventListener('click', e => {
+        const box = dualCanvas.getBoundingClientRect();
+        const x = e.clientX - box.left;
+        const y = e.clientY - box.top;
+        dualPoints.push([map(x, 0, primalCanvas.width, -scale, scale), map(y, 0, primalCanvas.width, scale, -scale)]);
     })
 
     function render(timeStamp) {
@@ -220,16 +230,67 @@
             emphasizePoint(dualContext, currentSegment, dualCurve);
         }
 
+        for (let p of dualPoints){
+            drawBlackPoint(dualContext, p);
+            drawPrimalLine(primalContext, p, parametrization);
+        }
+
         window.requestAnimationFrame(render);
     }
 
     window.requestAnimationFrame(render);
 
+    function drawBlackPoint(ctx, dualPoint){
+        ctx.fillStyle = 'hsla(0, 100%, 0%, 0.7)'
+        drawPoint(ctx, dualPoint, 10)
+    }
+
+    function drawPrimalLine(ctx, dualPoint, parametrization){
+        let pointA, pointB;
+        let slope, intercept;
+        let a = dualPoint[0];
+        let b = dualPoint[1]
+        switch (parametrization) {
+        case "fenchel":
+        case "y=ax-b":
+            slope = a;
+            intercept = - b;
+            break;
+
+        case "cramer":
+        case "ax+by=1":
+            slope = -a/b;
+            intercept = 1/b;
+            break;
+
+        case "polar":
+        case "ax+by=a^2+b^2":
+            slope = -a/b;
+            intercept = (a**2 + b**2)/b
+            break;
+        }
+
+        pointA = [-scale, intercept -  scale * slope];
+        pointB = [scale, intercept + scale * slope];
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'hsla(0, 100%, 0%, 1)';
+        drawLine(ctx,pointA,pointB)
+    }
+
     function drawTangent(ctx, index, points) {
         let curr = points[index];
         let next = points[index + 1];
         let diff = [next[0] - curr[0], next[1] - curr[1]];
+        let length = 10000;
+        let pointA = [curr[0] - length * diff[0], curr[1] - length * diff[1]];
+        let pointB = [curr[0] + length * diff[0], curr[1] + length * diff[1]];
 
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = `hsl(${(index + 1) / points.length * 360}, 70%, 35%)`
+        drawLine(ctx, pointA, pointB)
+    }
+
+    function drawLine(ctx,a,b){
         function xScale(x) {
             return map(x, -scale, scale, 0, width);
         }
@@ -238,24 +299,24 @@
             return map(y, scale, -scale, 0, width);
         }
 
-        let length = 10000
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = `hsl(${(index + 1) / points.length * 360}, 70%, 35%)`
         ctx.beginPath();
-        ctx.moveTo(xScale(curr[0] - length * diff[0]), yScale(curr[1] - length * diff[1]));
-        ctx.lineTo(xScale(curr[0] + length * diff[0]), yScale(curr[1] + length * diff[1]));
+        ctx.moveTo(xScale(a[0]), yScale(a[1]));
+        ctx.lineTo(xScale(b[0]), yScale(b[1]));
         ctx.stroke();
     }
 
     function emphasizePoint(ctx, index, points) {
-        let curr = points[index];
-        ctx.beginPath();
-        let radius = 16;
-        ctx.arc(map(curr[0], -scale, scale, 0, width), map(curr[1], scale, -scale, 0, width),
-            radius, 0, 2 * Math.PI);
         ctx.fillStyle = `hsla(${(index + 1) / points.length * 360}, 60%, 55%, 0.7)`;
-        ctx.fill()
+        drawPoint(ctx,points[index], 16)
     }
+
+    function drawPoint(ctx, point, radius) {
+        ctx.beginPath();
+        ctx.arc(map(point[0], -scale, scale, 0, width), map(point[1], scale, -scale, 0, width),
+            radius, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+
 
     function smoothenCurve(points) {
         // convolve points with some kernel
