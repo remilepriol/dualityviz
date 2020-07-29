@@ -106,10 +106,8 @@
         <p>Scale:
             <input type="range" value="2" min="1" max="10" step="0.01" id="scale">
         </p>
-        <p>Animate tangent: <input type="checkbox" id="tangentCheckbox" checked="true"></p>
-        <button id="clear">Clear</button>
+        <p>Animate tangent: <input type="checkbox" id="tangentCheckbox"></p>
     </div>
-    <!--              TODO add a checkbox to display convex envelope and corresponding dual. Two kinds of envelope: full envelope and lower envelope.-->
 
     <div class="canvas-side" style="grid-area: canvas1;">
         <h3 class="canvas-title">Primal</h3>
@@ -118,7 +116,8 @@
     </div>
     <div class="canvas-side" style="grid-area: canvas2;">
         <h3 class="canvas-title">Dual</h3>
-        <p class="remark">Click to reveal the dual point - primal line correspondence</p>
+        <p class="remark">Click to reveal the dual point - primal line correspondence
+            <button id="clear" style="margin: 0px;">Clear</button></p>
         <canvas id="dual">Dual plane where the dual snake will appear.</canvas>
     </div>
     <footer><p style="font-size: 16px">
@@ -133,6 +132,16 @@
 
 
 <script>
+
+    // TODO add a checkbox to display convex envelope and corresponding dual.
+    //  Two kinds of envelope: full envelope and lower envelope.
+    // compute the lower envelope with the beneath-beyond algorithm.
+    // compute the full envelope with the circular version of this, or check up wikipedia.
+    // highlight this envelope in dark blue or red in the primal.
+    // compute the dual of this envelope and highlight it in the dual.
+
+    // TODO add an input box to input curve equation
+    // Example t0 = -4pi, t1 = 4pi, x(t) = t, y(t) = sin(t)
 
     function map(x, inMin, inMax, outMin, outMax) {
         return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin
@@ -162,7 +171,6 @@
     let dualRadius = 10;
 
     document.getElementById("clear").addEventListener("click",e=>{
-        curve=[];
         dualPoints=[];
     })
 
