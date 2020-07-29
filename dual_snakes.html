@@ -9,12 +9,20 @@
         @import url('https://fonts.googleapis.com/css?family=Quicksand');
 
         * {
-            font-family: 'Arial', sans-serif;
-            /*box-sizing: border-box;*/
+            font-family: Arial, sans-serif;
             margin-top: 10px;
             margin-bottom: 10px;
             margin-left: 5px;
             margin-right: 5px;
+        }
+
+        p {
+            font-size: 20px;
+        }
+
+        h1 {
+            border-bottom: 1px solid #000;
+            padding-bottom: 10px;
         }
 
         .app {
@@ -31,17 +39,18 @@
             grid-area: edit;
         }
 
-        h1 {
-            border-bottom: 1px solid #000;
-            padding-bottom: 10px;
-        }
-
-        p, input {
-            font-size: 20px;
-        }
-
         input[type='range'] {
             width: 250px;
+        }
+
+        .remark {
+            color: #777777;
+            font-size: 16px;
+            text-indent: 5%;
+        }
+
+        .canvas-side {
+            align-self: end;
         }
 
         .canvas-title {
@@ -59,7 +68,6 @@
             grid-area: footer;
             color: #777777;
             text-align: center;
-            font-size: 10px;
         }
 
         a {
@@ -88,26 +96,25 @@
             <input type="radio" id="polar" name="parametrization" value="polar">
             <label for="polar">ax+by = a^2 + b^2, polar</label>
         </p>
-        <p style="opacity: 0.5; font-size: 16px;">Remark: polar is not exactly a dual
+        <p class="remark"> Remark: polar is not exactly a dual
             representation because its lines are not points in the primal.</p>
+        <p>Animate tangent: <input type="checkbox" id="tangentCheckbox" checked="true"></p>
         <!--  TODO add a checkbox to display sliding tangents and corresponding dual points
-                    plan: measure time elapsed since last refresh to decide on current segment
-                    for a given segment, draw tangent in appropriate color and highlight corresponding dual point
               TODO add a checkbox to display convex envelope and corresponding dual. Two kinds of envelope: full envelope and lower envelope.
         -->
     </div>
-    <div class="canvas-side" style="grid-area: canvas1; align-self: end;">
+    <div class="canvas-side" style="grid-area: canvas1;">
         <span class="canvas-title">Primal</span>
-        <span style="opacity: 0.5; font-size: 16px">Use your mouse or finger to put some snakes on the plane</span>
+        <span class="remark">Use your mouse or finger to put some snakes on the plane</span>
         <br>
         <canvas id="primal">Primal plane where you can draw any curvy snake.</canvas>
     </div>
-    <div class="canvas-side" style="grid-area: canvas2; align-self: end;">
+    <div class="canvas-side" style="grid-area: canvas2;">
         <span class="canvas-title">Dual</span>
         <br>
         <canvas id="dual">Dual plane where the dual snake will appear.</canvas>
     </div>
-    <footer><p>
+    <footer><p style="font-size: 16px">
         Built by <a href="https://remilepriol.github.io/">Remi Le Priol</a> upon <a
             href="https://soap.spacie.me/">https://soap.spacie.me/</a>. <br>
         Feedback welcome at <code style="background-color: #777777; color: #FFFFFF"> remi dot lp
@@ -124,7 +131,7 @@
         return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin
     }
 
-    let width = 600;
+    let width = 550;
 
     const primalCanvas = document.getElementById("primal")
     const dualCanvas = document.getElementById("dual")
@@ -203,10 +210,10 @@
         dualPoints = computeDualPoints(smoothPoints, parametrization);
         drawSnake(dualContext, dualPoints);
 
-        if (smoothPoints.length > 2) {
+        if (smoothPoints.length > 2 && document.getElementById("tangentCheckbox").checked) {
             let currentSegment = Math.floor(timeStamp / 90) % (smoothPoints.length - 1);
             drawTangent(primalContext, currentSegment, smoothPoints);
-            emphasizePoint(dualContext,currentSegment,dualPoints);
+            emphasizePoint(dualContext, currentSegment, dualPoints);
         }
 
         window.requestAnimationFrame(render);
@@ -241,7 +248,7 @@
         ctx.beginPath();
         let radius = 16;
         ctx.arc(map(curr[0], -scale, scale, 0, width), map(curr[1], scale, -scale, 0, width),
-            radius, 0, 2*Math.PI);
+            radius, 0, 2 * Math.PI);
         ctx.fillStyle = `hsla(${(index + 1) / points.length * 360}, 60%, 55%, 0.7)`;
         ctx.fill()
     }
