@@ -107,6 +107,7 @@
             <input type="range" value="2" min="1" max="10" step="0.01" id="scale">
         </p>
         <p>Animate tangent: <input type="checkbox" id="tangentCheckbox" checked="true"></p>
+        <button id="clear">Clear</button>
     </div>
     <!--              TODO add a checkbox to display convex envelope and corresponding dual. Two kinds of envelope: full envelope and lower envelope.-->
 
@@ -159,6 +160,11 @@
     let touching = false;
     let dualPoints=[];
     let dualRadius = 10;
+
+    document.getElementById("clear").addEventListener("click",e=>{
+        curve=[];
+        dualPoints=[];
+    })
 
     primalCanvas.addEventListener('touchstart', e => {
         e.preventDefault()
