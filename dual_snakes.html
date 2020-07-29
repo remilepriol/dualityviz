@@ -6,7 +6,6 @@
 
     <title>Dual Snakes</title>
     <style media="screen">
-        @import url('https://fonts.googleapis.com/css?family=Quicksand');
 
         * {
             font-family: Arial, sans-serif;
@@ -16,7 +15,7 @@
             margin-right: 5px;
         }
 
-        p {
+        p, input, label {
             font-size: 20px;
         }
 
@@ -25,12 +24,12 @@
             padding-bottom: 10px;
         }
 
+        /*TODO if screen width is less than height, display vertically*/
         .app {
             display: inline-grid;
             text-align: left;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: auto;
-            grid-row-gap: 0px;
             grid-template-areas: "context context" "left-edit right-edit" "canvas1 canvas2" "footer footer";
             padding: 20px;
         }
@@ -94,9 +93,9 @@
             <input type="radio" id="ax+by=1" name="parametrization" value="ax+by=1">
             <label for="ax+by=1">ax+by=1</label><br>
             <input type="radio" id="polar" name="parametrization" value="polar">
-            <label for="polar">ax+by = a^2 + b^2, polar</label>
+            <label for="polar">ax+by = a^2 + b^2, Polar</label>
         </p>
-        <p class="remark"> Remark: polar is not exactly a dual
+        <p class="remark"> Remark: Polar is not exactly a dual
             representation because its lines are not points in the primal.</p>
     </div>
 
@@ -154,19 +153,19 @@
         scale = parseFloat(`${e.target.value}`)
     })
 
-    let points = []
-    let touching = false
+    let curve = [];
+    let touching = false;
 
     primalCanvas.addEventListener('touchstart', e => {
         e.preventDefault()
         if (e.target != primalCanvas) return
-        points = []
+        curve = []
         touching = true
     })
 
     primalCanvas.addEventListener('mousedown', e => {
         if (e.target != primalCanvas) return
-        points = []
+        curve = []
         touching = true
     })
 
@@ -181,7 +180,7 @@
         const box = primalCanvas.getBoundingClientRect()
         const x = t.clientX - box.left
         const y = t.clientY - box.top
-        points.push([map(x, 0, primalCanvas.width, -scale, scale), map(y, 0, primalCanvas.width, scale, -scale)])
+        curve.push([map(x, 0, primalCanvas.width, -scale, scale), map(y, 0, primalCanvas.width, scale, -scale)])
     })
 
     primalCanvas.addEventListener('mousemove', e => {
@@ -189,7 +188,7 @@
         const box = primalCanvas.getBoundingClientRect()
         const x = e.clientX - box.left
         const y = e.clientY - box.top
-        points.push([map(x, 0, primalCanvas.width, -scale, scale), map(y, 0, primalCanvas.width, scale, -scale)])
+        curve.push([map(x, 0, primalCanvas.width, -scale, scale), map(y, 0, primalCanvas.width, scale, -scale)])
     })
 
     primalCanvas.addEventListener('touchend', e => {
@@ -208,17 +207,17 @@
         drawGrid(primalContext, scale, "x", "y");
         drawGrid(dualContext, scale, "a", "b");
 
-        smoothPoints = smoothCurve(points).reverse();
-        drawSnake(primalContext, smoothPoints);
+        smoothCurve = smoothenCurve(curve).reverse();
+        drawSnake(primalContext, smoothCurve);
 
         let parametrization = document.querySelector('input[name="parametrization"]:checked').value
-        dualPoints = computeDualPoints(smoothPoints, parametrization);
-        drawSnake(dualContext, dualPoints);
+        dualCurve = computeDualPoints(smoothCurve, parametrization);
+        drawSnake(dualContext, dualCurve);
 
-        if (smoothPoints.length > 2 && document.getElementById("tangentCheckbox").checked) {
-            let currentSegment = Math.floor(timeStamp / 90) % (smoothPoints.length - 1);
-            drawTangent(primalContext, currentSegment, smoothPoints);
-            emphasizePoint(dualContext, currentSegment, dualPoints);
+        if (smoothCurve.length > 2 && document.getElementById("tangentCheckbox").checked) {
+            let currentSegment = Math.floor(timeStamp / 90) % (smoothCurve.length - 1);
+            drawTangent(primalContext, currentSegment, smoothCurve);
+            emphasizePoint(dualContext, currentSegment, dualCurve);
         }
 
         window.requestAnimationFrame(render);
@@ -258,7 +257,7 @@
         ctx.fill()
     }
 
-    function smoothCurve(points) {
+    function smoothenCurve(points) {
         // convolve points with some kernel
         let kernel = [.8, .6, .4, .2, .1];
         let sum = 1;
@@ -392,7 +391,7 @@
             let prev = snakePoints[i - 1]
             let curr = snakePoints[i]
             ctx.strokeStyle = `hsla(${i / snakePoints.length * 360}, 60%, 55%, 1)`
-            ctx.lineWidth = Math.round(map(i - 1, 0, points.length, 15, 3))
+            ctx.lineWidth = Math.round(map(i - 1, 0, snakePoints.length, 15, 3))
             if (tipCol == null) tipCol = ctx.strokeStyle;
             ctx.beginPath()
             ctx.moveTo(map(prev[0], -scale, scale, 0, width), map(prev[1], scale, -scale, 0, width))
