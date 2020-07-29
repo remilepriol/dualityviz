@@ -196,7 +196,7 @@
         drawGrid(primalContext, scale, "x", "y");
         drawGrid(dualContext, scale, "a", "b");
 
-        smoothPoints = smoothCurve(points.reverse());
+        smoothPoints = smoothCurve(points).reverse();
 
         let parametrization = document.querySelector('input[name="parametrization"]:checked').value
 
@@ -209,8 +209,8 @@
             pp = computeDualPoints(pp, parametrization);
         }
 
-        if (smoothPoints.length >2) {
-            let currentSegment = Math.floor(timeStamp/90) % (smoothPoints.length-1);
+        if (smoothPoints.length > 2) {
+            let currentSegment = Math.floor(timeStamp / 90) % (smoothPoints.length - 1);
             drawTangent(primalContext, currentSegment, smoothPoints);
         }
 
@@ -223,14 +223,21 @@
         let curr = points[index];
         let next = points[index + 1];
         let diff = [next[0] - curr[0], next[1] - curr[1]];
-        let length = 1000
-        ctx.beginPath();
+
+        function xScale(x) {
+            return map(x, -scale, scale, 0, width);
+        }
+
+        function yScale(y) {
+            return map(y, scale, -scale, 0, width);
+        }
+
+        let length = 10000
         ctx.lineWidth = 1;
-        ctx.strokeStyle = `hsl(${(index+1) / points.length * 360}, 60%, 55%)`
-        ctx.moveTo(map(curr[0] - length * diff[0], -scale, scale, 0, width),
-            map(curr[1] - length * diff[1], scale, -scale, 0, width));
-        ctx.lineTo(map(curr[0] + length * diff[0], -scale, scale, 0, width),
-            map(curr[1] + length * diff[1], scale, -scale, 0, width));
+        ctx.strokeStyle = `hsl(${(index + 1) / points.length * 360}, 60%, 55%)`
+        ctx.beginPath();
+        ctx.moveTo(xScale(curr[0] - length * diff[0]), yScale(curr[1] - length * diff[1]));
+        ctx.lineTo(xScale(curr[0] + length * diff[0]), yScale(curr[1] + length * diff[1]));
         ctx.stroke();
     }
 
