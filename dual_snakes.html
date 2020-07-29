@@ -24,7 +24,7 @@
             grid-template-rows: auto;
             grid-row-gap: 0px;
             grid-template-areas: "edit edit" "canvas1 canvas2" "footer footer";
-            padding:20px
+            padding: 20px;
         }
 
         .edit {
@@ -44,7 +44,7 @@
             width: 250px;
         }
 
-        .canvas-title{
+        .canvas-title {
             color: #777777;
             font-size: 24px;
             font-weight: 900;
@@ -73,7 +73,9 @@
 <div class="app">
     <div class="edit">
         <h1>Dual Snakes</h1>
-        <p>Every point of the dual space is a straight line from the primal space. The dual of a curve is computed by connecting the tangents (straight lines) of this curve in the dual space. See what it looks like with different parametrizations of the dual space.</p>
+        <p>Every point of the dual space is a straight line from the primal space. The dual of a
+            curve is computed by connecting the tangents (straight lines) of this curve in the dual
+            space. See what it looks like with different parametrizations of the dual space.</p>
         <p>Scale:
             <input type="range" value="2" min="1" max="10" step="0.01" id="scale">
         </p>
@@ -86,26 +88,32 @@
             <input type="radio" id="polar" name="parametrization" value="polar">
             <label for="polar">ax+by = a^2 + b^2, polar</label>
         </p>
-        <p style="opacity: 0.5; font-size: 16px;">Remark: polar is not exactly a dual representation because its lines are not points in the primal.</p>
-<!--  TODO add a checkbox to display sliding tangents and corresponding dual points
-            plan: measure time elapsed since last refresh to decide on current segment
-            for a given segment, draw tangent in appropriate color and highlight corresponding dual point
-      TODO add a checkbox to display convex envelope and corresponding dual. Two kinds of envelope: full envelope and lower envelope.
--->
+        <p style="opacity: 0.5; font-size: 16px;">Remark: polar is not exactly a dual
+            representation because its lines are not points in the primal.</p>
+        <!--  TODO add a checkbox to display sliding tangents and corresponding dual points
+                    plan: measure time elapsed since last refresh to decide on current segment
+                    for a given segment, draw tangent in appropriate color and highlight corresponding dual point
+              TODO add a checkbox to display convex envelope and corresponding dual. Two kinds of envelope: full envelope and lower envelope.
+        -->
     </div>
     <div class="canvas-side" style="grid-area: canvas1; align-self: end;">
         <span class="canvas-title">Primal</span>
         <span style="opacity: 0.5; font-size: 16px">Use your mouse or finger to put some snakes on the plane</span>
-        <br><canvas id="primal">Primal plane where you can draw any curvy snake.</canvas>
+        <br>
+        <canvas id="primal">Primal plane where you can draw any curvy snake.</canvas>
     </div>
     <div class="canvas-side" style="grid-area: canvas2; align-self: end;">
         <span class="canvas-title">Dual</span>
-        <br><canvas id="dual">Dual plane where the dual snake will appear.</canvas>
+        <br>
+        <canvas id="dual">Dual plane where the dual snake will appear.</canvas>
     </div>
     <footer><p>
-        Built by <a href="https://remilepriol.github.io/">Remi Le Priol</a> upon <a href="https://soap.spacie.me/">https://soap.spacie.me/</a>. <br>
-        Feedback welcome at <code style="background-color: #777777; color: #FFFFFF"> remi dot lp dot 17 at gmail dot com </code>. <br>
-        See also visualizations for the Legendre-Fenchel conjugate of a function at <a href="index.html">DualityViz</a>.
+        Built by <a href="https://remilepriol.github.io/">Remi Le Priol</a> upon <a
+            href="https://soap.spacie.me/">https://soap.spacie.me/</a>. <br>
+        Feedback welcome at <code style="background-color: #777777; color: #FFFFFF"> remi dot lp
+        dot 17 at gmail dot com </code>. <br>
+        See also visualizations for the Legendre-Fenchel conjugate of a function at <a
+            href="index.html">DualityViz</a>.
     </p></footer>
 </div>
 
@@ -183,28 +191,48 @@
         touching = false
     })
 
+    function render(timeStamp) {
 
-    function render() {
-        drawGrid(primalCanvas, primalContext, scale, "x","y");
-        drawGrid(dualCanvas, dualContext, scale,"a","b");
+        drawGrid(primalContext, scale, "x", "y");
+        drawGrid(dualContext, scale, "a", "b");
 
-        smoothPoints = smoothCurve(points);
+        smoothPoints = smoothCurve(points.reverse());
 
         let parametrization = document.querySelector('input[name="parametrization"]:checked').value
 
         pp = [...smoothPoints]
         for (let i = 0; i < 1; i++) {
             // for i>=2 we see that the dual curve of the polar dual curve is not the primal curve.
-            drawSnake(primalCanvas, primalContext, pp.reverse());
+            drawSnake(primalContext, pp);
             pp = computeDualPoints(pp, parametrization);
-            drawSnake(dualCanvas, dualContext, pp.reverse());
+            drawSnake(dualContext, pp);
             pp = computeDualPoints(pp, parametrization);
+        }
+
+        if (smoothPoints.length >2) {
+            let currentSegment = Math.floor(timeStamp/90) % (smoothPoints.length-1);
+            drawTangent(primalContext, currentSegment, smoothPoints);
         }
 
         window.requestAnimationFrame(render);
     }
 
-    render()
+    window.requestAnimationFrame(render);
+
+    function drawTangent(ctx, index, points) {
+        let curr = points[index];
+        let next = points[index + 1];
+        let diff = [next[0] - curr[0], next[1] - curr[1]];
+        let length = 1000
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = `hsl(${(index+1) / points.length * 360}, 60%, 55%)`
+        ctx.moveTo(map(curr[0] - length * diff[0], -scale, scale, 0, width),
+            map(curr[1] - length * diff[1], scale, -scale, 0, width));
+        ctx.lineTo(map(curr[0] + length * diff[0], -scale, scale, 0, width),
+            map(curr[1] + length * diff[1], scale, -scale, 0, width));
+        ctx.stroke();
+    }
 
     function smoothCurve(points) {
         // convolve points with some kernel
@@ -282,7 +310,7 @@
         return dualPoints
     }
 
-    function drawGrid(cvs, ctx, scale, xLabel, yLabel) {
+    function drawGrid(ctx, scale, xLabel, yLabel) {
         ctx.clearRect(0, 0, width, width)
         for (let x = 0; x < width / 2; x += (width / 2 / scale)) {
             ctx.lineWidth = 1
@@ -298,39 +326,40 @@
             ctx.lineTo(width, width / 2 - x)
             ctx.stroke()
         }
-        ctx.lineWidth = 2
-        ctx.lineCap = 'round'
-        ctx.strokeStyle = '#aaa'
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#aaa';
         let arrowSize = 0.04;
-        ctx.font = "30px Arial";
-        ctx.fillStyle = "#666";
         ctx.beginPath()
-
-        // horizontal line and arrow head
+        // horizontal axis and arrow head
         ctx.moveTo(0, width / 2);
         ctx.lineTo(width, width / 2);
-        ctx.lineTo((1-arrowSize)*width, (1-arrowSize)*width/2);
+        ctx.lineTo((1 - arrowSize) * width, (1 - arrowSize) * width / 2);
         ctx.moveTo(width, width / 2);
-        ctx.lineTo((1-arrowSize)*width, (1+arrowSize)*width/2);
-        ctx.fillText(xLabel, (1-arrowSize)*width - 20, (1+arrowSize)*width/2 + 10);
+        ctx.lineTo((1 - arrowSize) * width, (1 + arrowSize) * width / 2);
 
-        // vertical line and arrow head
+        // vertical axis and arrow head
         ctx.moveTo(width / 2, 0)
         ctx.lineTo(width / 2, width);
         ctx.moveTo(width / 2, 0)
-        ctx.lineTo((1-arrowSize)*width/2, arrowSize*width)
+        ctx.lineTo((1 - arrowSize) * width / 2, arrowSize * width)
         ctx.moveTo(width / 2, 0)
-        ctx.lineTo((1+arrowSize)*width/2, arrowSize*width)
-        ctx.fillText(yLabel, (1-arrowSize)*width/2 - 20, (arrowSize)*width + 10);
-
+        ctx.lineTo((1 + arrowSize) * width / 2, arrowSize * width)
         ctx.stroke()
 
+        // axis labels
+        ctx.font = "30px Arial";
+        ctx.fillStyle = "#666";
+        ctx.fillText(xLabel, (1 - arrowSize) * width - 20, (1 + arrowSize) * width / 2 + 10);
+        ctx.fillText(yLabel, (1 - arrowSize) * width / 2 - 20, (arrowSize) * width + 10);
+
+
         ctx.beginPath()
-        ctx.arc(width / 2, cvs.height / 2, width / (scale * 2), 0, Math.PI * 2)
+        ctx.arc(width / 2, width / 2, width / (scale * 2), 0, Math.PI * 2)
         ctx.stroke()
     }
 
-    function drawSnake(cvs, ctx, snakePoints) {
+    function drawSnake(ctx, snakePoints) {
 
         let tipCol = null
 
