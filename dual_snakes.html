@@ -197,17 +197,11 @@
         drawGrid(dualContext, scale, "a", "b");
 
         smoothPoints = smoothCurve(points).reverse();
+        drawSnake(primalContext, smoothPoints);
 
         let parametrization = document.querySelector('input[name="parametrization"]:checked').value
-
-        pp = [...smoothPoints]
-        for (let i = 0; i < 1; i++) {
-            // for i>=2 we see that the dual curve of the polar dual curve is not the primal curve.
-            drawSnake(primalContext, pp);
-            pp = computeDualPoints(pp, parametrization);
-            drawSnake(dualContext, pp);
-            pp = computeDualPoints(pp, parametrization);
-        }
+        dualPoints = computeDualPoints(smoothPoints, parametrization);
+        drawSnake(dualContext, dualPoints);
 
         if (smoothPoints.length > 2) {
             let currentSegment = Math.floor(timeStamp / 90) % (smoothPoints.length - 1);
