@@ -31,12 +31,8 @@
             grid-template-columns: 1fr 1fr;
             grid-template-rows: auto;
             grid-row-gap: 0px;
-            grid-template-areas: "edit edit" "canvas1 canvas2" "footer footer";
+            grid-template-areas: "context context" "left-edit right-edit" "canvas1 canvas2" "footer footer";
             padding: 20px;
-        }
-
-        .edit {
-            grid-area: edit;
         }
 
         input[type='range'] {
@@ -73,36 +69,45 @@
         a {
             color: inherit;
         }
+
+        .email {
+            background-color: #777777;
+            color: #FFFFFF
+        }
+
     </style>
     <!-- maths for the viz   -->
 </head>
 <body>
 
 <div class="app">
-    <div class="edit">
+    <div style="grid-area: context;">
         <h1>Dual Snakes</h1>
         <p>Every point of the dual space is a straight line from the primal space. The dual of a
             curve is computed by connecting the tangents (straight lines) of this curve in the dual
             space. See what it looks like with different parametrizations of the dual space.</p>
-        <p>Scale:
-            <input type="range" value="2" min="1" max="10" step="0.01" id="scale">
-        </p>
-        <p>
-            Dual Parametrization
+    </div>
+    <div style="grid-area: left-edit;">
+        <p> Dual Parametrization: <br>
             <input type="radio" id="y=ax-b" name="parametrization" value="y=ax-b" checked>
-            <label for="y=ax-b">y=ax-b, Fenchel</label>
+            <label for="y=ax-b">y=ax-b, Fenchel</label><br>
             <input type="radio" id="ax+by=1" name="parametrization" value="ax+by=1">
-            <label for="ax+by=1">ax+by=1</label>
+            <label for="ax+by=1">ax+by=1</label><br>
             <input type="radio" id="polar" name="parametrization" value="polar">
             <label for="polar">ax+by = a^2 + b^2, polar</label>
         </p>
         <p class="remark"> Remark: polar is not exactly a dual
             representation because its lines are not points in the primal.</p>
-        <p>Animate tangent: <input type="checkbox" id="tangentCheckbox" checked="true"></p>
-        <!--  TODO add a checkbox to display sliding tangents and corresponding dual points
-              TODO add a checkbox to display convex envelope and corresponding dual. Two kinds of envelope: full envelope and lower envelope.
-        -->
     </div>
+
+    <div style="grid-area: right-edit">
+        <p>Scale:
+            <input type="range" value="2" min="1" max="10" step="0.01" id="scale">
+        </p>
+        <p>Animate tangent: <input type="checkbox" id="tangentCheckbox" checked="true"></p>
+    </div>
+    <!--              TODO add a checkbox to display convex envelope and corresponding dual. Two kinds of envelope: full envelope and lower envelope.-->
+
     <div class="canvas-side" style="grid-area: canvas1;">
         <span class="canvas-title">Primal</span>
         <span class="remark">Use your mouse or finger to put some snakes on the plane</span>
@@ -117,7 +122,7 @@
     <footer><p style="font-size: 16px">
         Built by <a href="https://remilepriol.github.io/">Remi Le Priol</a> upon <a
             href="https://soap.spacie.me/">https://soap.spacie.me/</a>. <br>
-        Feedback welcome at <code style="background-color: #777777; color: #FFFFFF"> remi dot lp
+        Feedback welcome at <code class="email"> &nbsp remi dot lp
         dot 17 at gmail dot com </code>. <br>
         See also visualizations for the Legendre-Fenchel conjugate of a function at <a
             href="index.html">DualityViz</a>.
