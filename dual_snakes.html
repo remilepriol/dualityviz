@@ -100,7 +100,7 @@
         }
 
     </style>
-    <!-- maths for the viz   -->
+    <script src="math.min.js"></script>
 </head>
 <body>
 
@@ -130,16 +130,16 @@
     <div style="grid-area: right-edit">
         <p><label for="scale"> Scale:</label>
             <input type="range" value="2" min="1" max="10" step="0.01" id="scale"></p>
-        <p>Input curve:</p>
+        <p>Input curve: <button id="drawMaths">Draw</button> </p>
         <ul>
             <li> <label for="t0"> t0=</label>
-                <input type="text" class="scalar" id="t0" value="-4">
+                <input type="text" class="scalar" id="t0" value="- pi">
             <label for="t1"> t1=</label>
-                <input type="text" class="scalar" id="t1" value="+4"> </li>
+                <input type="text" class="scalar" id="t1" value=" pi"> </li>
             <li> <label for="x(t)">x(t)=</label>
-                <input type="text" class="function" id="x(t)" value="cos(t)"> </li>
+                <input type="text" class="function" id="x(t)" value="t"> </li>
             <li> <label for="y(t)">y(t)=</label>
-                <input type="text" class="function" id="y(t)" value="t"></li>
+                <input type="text" class="function" id="y(t)" value="cos(2t)"></li>
             <li> <label for="resolution">Resolution:</label>
                 <input type="range" id="resolution" value="500" min="100" max="2000" step="100"> </li>
         </ul>
@@ -209,6 +209,24 @@
 
     document.getElementById("clear").addEventListener("click",e=>{
         dualPoints=[];
+    })
+
+    document.getElementById("drawMaths").addEventListener("click", e=>{
+        // parse inputs
+        let t0 = math.eval(document.getElementById("t0").value);
+        let t1 = math.eval(document.getElementById("t1").value);
+        let resolution = +document.getElementById("resolution").value;
+        let step = (t1 - t0)/(resolution -1);
+
+        let xfunc = document.getElementById("x(t)").value;
+        let yfunc = document.getElementById("y(t)").value;
+
+        curve=[];
+        for (let t=t0; t<=t1; t+=step){
+            let xt = math.eval(xfunc,{t:t});
+            let yt = math.eval(yfunc,{t:t});
+            curve.push([xt,yt]);
+        }
     })
 
     primalCanvas.addEventListener('touchstart', e => {
