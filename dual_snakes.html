@@ -276,7 +276,15 @@
         dualPoints.push([x, y, screenX, screenY]);
     })
 
+    let previousTime = 0;
+    let counter = 0;
+
     function render(timeStamp) {
+
+        if (timeStamp - previousTime > 60* 2**-document.getElementById("speed").value){
+            previousTime = timeStamp;
+            counter ++;
+        }
 
         drawGrid(primalContext, scale, "x", "y");
         drawGrid(dualContext, scale, "a", "b");
@@ -288,17 +296,20 @@
         dualCurve = computeDualPoints(smoothCurve, parametrization);
         drawSnake(dualContext, dualCurve);
 
+        // animate tangent
         if (smoothCurve.length > 2 && document.getElementById("tangentCheckbox").checked) {
-            let currentSegment = Math.floor(timeStamp / 90) % (smoothCurve.length - 1);
+            let currentSegment = counter % (smoothCurve.length - 1);
             drawTangent(primalContext, currentSegment, smoothCurve);
             emphasizePoint(dualContext, currentSegment, dualCurve);
         }
 
+        // dual points and primal lines
         for (let p of dualPoints){
             drawBlackPoint(dualContext, p);
             drawPrimalLine(primalContext, p, parametrization);
         }
 
+        // recursive call before each screen refresh
         window.requestAnimationFrame(render);
     }
 
