@@ -110,22 +110,23 @@
 <div class="app">
     <div style="grid-area: context;">
         <h1>Dual Snakes</h1>
-        <p>Every point of the dual space is a straight line from the primal space. The dual of a
-            curve is computed by connecting the tangents (straight lines) of this curve in the dual
-            space. See what it looks like with different parametrizations of the dual space.</p>
+        <p>Every point of the (a,b) dual space represents a straight line from the primal space.
+            For instance, (a,b) can represent the line ax+by=1 or y=ax-b.
+            The dual of a curve is computed by mapping its tangents to the dual space.</p>
     </div>
     <div style="grid-area: left-edit;">
         <p> Dual Parametrization: </p>
         <ul>
             <li><input type="radio" id="y=ax-b" name="parametrization" value="y=ax-b" checked>
-                <label for="y=ax-b">y=ax-b, Fenchel</label></li>
+                <label for="y=ax-b">Fenchel-Legendre: y=ax-b</label></li>
             <li><input type="radio" id="ax+by=1" name="parametrization" value="ax+by=1">
                 <label for="ax+by=1">ax+by=1</label></li>
             <li><input type="radio" id="polar" name="parametrization" value="polar">
-                <label for="polar">ax+by = a^2 + b^2, Polar</label></li>
+                <label for="polar">Polar: ax+by = a^2 + b^2</label></li>
         </ul>
         <p class="remark"> Remark: Polar is not exactly a dual
-            representation because its lines do not represent points in the primal.</p>
+            representation because the dual of the dual is not the primal.
+            But it makes pretty shapes.</p>
         <p><label for="tangentCheckbox">Animate tangent:</label> <input type="checkbox"
                                                                         id="tangentCheckbox"></p>
         <p><label for="speed">Speed:</label> <input type="range" id="speed" value="0" min="-4"
