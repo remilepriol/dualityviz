@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- saved from url=(0023)https://soap.spacie.me/ -->
 <html lang="en" dir="ltr">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -7,7 +6,7 @@
     <title>Dual Snakes</title>
     <style media="screen">
 
-        * {
+        body, p, ul {
             font-family: Arial, sans-serif;
             margin-top: 10px;
             margin-bottom: 10px;
@@ -37,6 +36,20 @@
         input[type='range'] {
             width: 250px;
         }
+        input[type='checkbox'] {
+            height: 20px;
+            width: 20px;
+        }
+
+        input[type='text']{
+            margin: 4px;
+        }
+        input.function {
+            width: 200px;
+        }
+        input.scalar {
+            width: 40px;
+        }
 
         .remark {
             color: #777777;
@@ -44,6 +57,15 @@
             padding-left: 30px;
             margin-top: 3px;
             margin-bottom: 3px;
+        }
+
+        ul {
+            list-style-type: none;
+        }
+
+        button {
+            font-size: inherit;
+            margin: 0;
         }
 
         .canvas-side {
@@ -90,34 +112,49 @@
             space. See what it looks like with different parametrizations of the dual space.</p>
     </div>
     <div style="grid-area: left-edit;">
-        <p> Dual Parametrization: <br>
-            <input type="radio" id="y=ax-b" name="parametrization" value="y=ax-b" checked>
-            <label for="y=ax-b">y=ax-b, Fenchel</label><br>
-            <input type="radio" id="ax+by=1" name="parametrization" value="ax+by=1">
-            <label for="ax+by=1">ax+by=1</label><br>
-            <input type="radio" id="polar" name="parametrization" value="polar">
-            <label for="polar">ax+by = a^2 + b^2, Polar</label>
-        </p>
+        <p> Dual Parametrization: </p>
+        <ul>
+            <li><input type="radio" id="y=ax-b" name="parametrization" value="y=ax-b" checked>
+            <label for="y=ax-b">y=ax-b, Fenchel</label></li>
+            <li><input type="radio" id="ax+by=1" name="parametrization" value="ax+by=1">
+            <label for="ax+by=1">ax+by=1</label></li>
+            <li><input type="radio" id="polar" name="parametrization" value="polar">
+            <label for="polar">ax+by = a^2 + b^2, Polar</label></li>
+        </ul>
         <p class="remark"> Remark: Polar is not exactly a dual
             representation because its lines do not represent points in the primal.</p>
+        <p> <label for="tangentCheckbox">Animate tangent:</label> <input type="checkbox" id="tangentCheckbox"></p>
+        <p><label for="speed">Speed:</label> <input type="range" id="speed" value="0" min="-4" max="4" step="1"></p>
     </div>
 
     <div style="grid-area: right-edit">
-        <p>Scale:
-            <input type="range" value="2" min="1" max="10" step="0.01" id="scale">
-        </p>
-        <p>Animate tangent: <input type="checkbox" id="tangentCheckbox"></p>
+        <p><label for="scale"> Scale:</label>
+            <input type="range" value="2" min="1" max="10" step="0.01" id="scale"></p>
+        <p>Input curve:</p>
+        <ul>
+            <li> <label for="t0"> t0=</label>
+                <input type="text" class="scalar" id="t0" value="-4">
+            <label for="t1"> t1=</label>
+                <input type="text" class="scalar" id="t1" value="+4"> </li>
+            <li> <label for="x(t)">x(t)=</label>
+                <input type="text" class="function" id="x(t)" value="cos(t)"> </li>
+            <li> <label for="y(t)">y(t)=</label>
+                <input type="text" class="function" id="y(t)" value="t"></li>
+            <li> <label for="resolution">Resolution:</label>
+                <input type="range" id="resolution" value="500" min="100" max="2000" step="100"> </li>
+        </ul>
     </div>
 
     <div class="canvas-side" style="grid-area: canvas1;">
         <h3 class="canvas-title">Primal</h3>
-        <p class="remark">Use your mouse or finger to put some snakes on the plane</p>
+        <p class="remark">Use your mouse or finger to put some snakes on the plane
+            <button id="glide">Glide</button></p>
         <canvas id="primal">Primal plane where you can draw any curvy snake.</canvas>
     </div>
     <div class="canvas-side" style="grid-area: canvas2;">
         <h3 class="canvas-title">Dual</h3>
         <p class="remark">Click to reveal the dual point - primal line correspondence
-            <button id="clear" style="margin: 0;">Clear</button></p>
+            <button id="clear">Clear</button></p>
         <canvas id="dual">Dual plane where the dual snake will appear.</canvas>
     </div>
     <footer><p style="font-size: 16px">
