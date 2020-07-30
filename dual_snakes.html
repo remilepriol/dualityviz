@@ -36,17 +36,20 @@
         input[type='range'] {
             width: 250px;
         }
+
         input[type='checkbox'] {
             height: 20px;
             width: 20px;
         }
 
-        input[type='text']{
+        input[type='text'] {
             margin: 4px;
         }
+
         input.function {
             width: 200px;
         }
+
         input.scalar {
             width: 40px;
         }
@@ -115,46 +118,52 @@
         <p> Dual Parametrization: </p>
         <ul>
             <li><input type="radio" id="y=ax-b" name="parametrization" value="y=ax-b" checked>
-            <label for="y=ax-b">y=ax-b, Fenchel</label></li>
+                <label for="y=ax-b">y=ax-b, Fenchel</label></li>
             <li><input type="radio" id="ax+by=1" name="parametrization" value="ax+by=1">
-            <label for="ax+by=1">ax+by=1</label></li>
+                <label for="ax+by=1">ax+by=1</label></li>
             <li><input type="radio" id="polar" name="parametrization" value="polar">
-            <label for="polar">ax+by = a^2 + b^2, Polar</label></li>
+                <label for="polar">ax+by = a^2 + b^2, Polar</label></li>
         </ul>
         <p class="remark"> Remark: Polar is not exactly a dual
             representation because its lines do not represent points in the primal.</p>
-        <p> <label for="tangentCheckbox">Animate tangent:</label> <input type="checkbox" id="tangentCheckbox"></p>
-        <p><label for="speed">Speed:</label> <input type="range" id="speed" value="0" min="-4" max="4" step="1"></p>
+        <p><label for="tangentCheckbox">Animate tangent:</label> <input type="checkbox"
+                                                                        id="tangentCheckbox"></p>
+        <p><label for="speed">Speed:</label> <input type="range" id="speed" value="0" min="-4"
+                                                    max="4" step="1"></p>
     </div>
 
     <div style="grid-area: right-edit">
         <p><label for="scale"> Scale:</label>
             <input type="range" value="2" min="1" max="10" step="0.01" id="scale"></p>
-        <p>Input curve: <button id="drawMaths">Draw</button> </p>
+        <p>Input curve:
+            <button id="drawMaths">Draw</button>
+        </p>
         <ul>
-            <li> <label for="t0"> t0=</label>
+            <li><label for="t0"> t0=</label>
                 <input type="text" class="scalar" id="t0" value="- 2pi">
-            <label for="t1"> t1=</label>
-                <input type="text" class="scalar" id="t1" value=" 2pi"> </li>
-            <li> <label for="x(t)">x(t)=</label>
-                <input type="text" class="function" id="x(t)" value="t"> </li>
-            <li> <label for="y(t)">y(t)=</label>
+                <label for="t1"> t1=</label>
+                <input type="text" class="scalar" id="t1" value=" 2pi"></li>
+            <li><label for="x(t)">x(t)=</label>
+                <input type="text" class="function" id="x(t)" value="t"></li>
+            <li><label for="y(t)">y(t)=</label>
                 <input type="text" class="function" id="y(t)" value="cos(2t)"></li>
-<!--            <li> <label for="resolution">Resolution:</label>-->
-<!--                <input type="range" id="resolution" value="500" min="100" max="2000" step="100"> </li>-->
+            <!--            <li> <label for="resolution">Resolution:</label>-->
+            <!--                <input type="range" id="resolution" value="500" min="100" max="2000" step="100"> </li>-->
         </ul>
     </div>
 
     <div class="canvas-side" style="grid-area: canvas1;">
         <h3 class="canvas-title">Primal</h3>
         <p class="remark">Use your mouse or finger to put some snakes on the plane
-            <button id="slither">and slither !</button></p>
+            <button id="slither">and slither !</button>
+        </p>
         <canvas id="primal">Primal plane where you can draw any curvy snake.</canvas>
     </div>
     <div class="canvas-side" style="grid-area: canvas2;">
         <h3 class="canvas-title">Dual</h3>
         <p class="remark">Click to reveal the dual point - primal line correspondence
-            <button id="clear">Clear</button></p>
+            <button id="clear">Clear</button>
+        </p>
         <canvas id="dual">Dual plane where the dual snake will appear.</canvas>
     </div>
     <footer><p style="font-size: 16px">
@@ -204,22 +213,22 @@
     let curve = [];
     let touching = false;
 
-    document.getElementById("drawMaths").addEventListener("click", e=>{
+    document.getElementById("drawMaths").addEventListener("click", e => {
         // parse inputs
         let t0 = math.eval(document.getElementById("t0").value);
         let t1 = math.eval(document.getElementById("t1").value);
         // let resolution = +document.getElementById("resolution").value;
-        let resolution=800;
-        let step = (t1 - t0)/(resolution -1);
+        let resolution = 800;
+        let step = (t1 - t0) / (resolution - 1);
 
         let xfunc = document.getElementById("x(t)").value;
         let yfunc = document.getElementById("y(t)").value;
 
-        curve=[];
-        for (let t=t0; t<=t1; t+=step){
-            let xt = math.eval(xfunc,{t:t});
-            let yt = math.eval(yfunc,{t:t});
-            curve.push([xt,yt]);
+        curve = [];
+        for (let t = t0; t <= t1; t += step) {
+            let xt = math.eval(xfunc, {t: t});
+            let yt = math.eval(yfunc, {t: t});
+            curve.push([xt, yt]);
         }
     })
 
@@ -271,11 +280,11 @@
         touching = false
     })
 
-    let dualPoints=[];
+    let dualPoints = [];
     let dualRadius = 10;
 
-    document.getElementById("clear").addEventListener("click",e=>{
-        dualPoints=[];
+    document.getElementById("clear").addEventListener("click", e => {
+        dualPoints = [];
     })
 
     dualCanvas.addEventListener('click', e => {
@@ -285,10 +294,10 @@
         let x = map(screenX, 0, width, -scale, scale);
         let y = map(screenY, 0, width, scale, -scale)
 
-        for (let i=0; i<dualPoints.length; i++){
+        for (let i = 0; i < dualPoints.length; i++) {
             let p = dualPoints[i];
-            if (((screenX - p[2])**2 + (screenY - p[3])**2) < dualRadius**2){
-                dualPoints.splice(i,1);
+            if (((screenX - p[2]) ** 2 + (screenY - p[3]) ** 2) < dualRadius ** 2) {
+                dualPoints.splice(i, 1);
                 return;
             }
         }
@@ -302,8 +311,8 @@
     };
 
 
-    document.getElementById("slither").onclick = function(){
-        slither.active=true;
+    document.getElementById("slither").onclick = function () {
+        slither.active = true;
         slither.counter = 0;
         slither.length = Math.floor(curve.length / 3);
     }
@@ -313,10 +322,10 @@
 
     function render(timeStamp) {
 
-        if (timeStamp - previousTime > 60* 2**-document.getElementById("speed").value){
+        if (timeStamp - previousTime > 60 * 2 ** -document.getElementById("speed").value) {
             previousTime = timeStamp;
-            counter ++;
-            slither.counter ++;
+            counter++;
+            slither.counter++;
         }
 
         drawGrid(primalContext, scale, "x", "y");
@@ -324,11 +333,11 @@
 
         smoothCurve = smoothenCurve(curve);
 
-        if(slither.active){
-            if (slither.counter + slither.length < curve.length){
+        if (slither.active) {
+            if (slither.counter + slither.length < curve.length) {
                 smoothCurve = smoothCurve.slice(slither.counter, slither.counter + slither.length)
-            }else{
-                slither.active=false
+            } else {
+                slither.active = false
             }
         }
 
@@ -347,7 +356,7 @@
         }
 
         // dual points and primal lines
-        for (let p of dualPoints){
+        for (let p of dualPoints) {
             drawBlackPoint(dualContext, p);
             drawPrimalLine(primalContext, p, parametrization);
         }
@@ -358,41 +367,41 @@
 
     window.requestAnimationFrame(render);
 
-    function drawBlackPoint(ctx, dualPoint){
+    function drawBlackPoint(ctx, dualPoint) {
         ctx.fillStyle = 'hsla(0, 100%, 0%, 0.7)'
         drawPoint(ctx, dualPoint, dualRadius)
     }
 
-    function drawPrimalLine(ctx, dualPoint, parametrization){
+    function drawPrimalLine(ctx, dualPoint, parametrization) {
         let pointA, pointB;
         let slope, intercept;
         let a = dualPoint[0];
         let b = dualPoint[1]
         switch (parametrization) {
-        case "fenchel":
-        case "y=ax-b":
-            slope = a;
-            intercept = - b;
-            break;
+            case "fenchel":
+            case "y=ax-b":
+                slope = a;
+                intercept = -b;
+                break;
 
-        case "cramer":
-        case "ax+by=1":
-            slope = -a/b;
-            intercept = 1/b;
-            break;
+            case "cramer":
+            case "ax+by=1":
+                slope = -a / b;
+                intercept = 1 / b;
+                break;
 
-        case "polar":
-        case "ax+by=a^2+b^2":
-            slope = -a/b;
-            intercept = (a**2 + b**2)/b
-            break;
+            case "polar":
+            case "ax+by=a^2+b^2":
+                slope = -a / b;
+                intercept = (a ** 2 + b ** 2) / b
+                break;
         }
 
-        pointA = [-scale, intercept -  scale * slope];
+        pointA = [-scale, intercept - scale * slope];
         pointB = [scale, intercept + scale * slope];
         ctx.lineWidth = 1;
         ctx.strokeStyle = 'hsla(0, 100%, 0%, 1)';
-        drawLine(ctx,pointA,pointB)
+        drawLine(ctx, pointA, pointB)
     }
 
     function drawTangent(ctx, index, points) {
@@ -408,7 +417,7 @@
         drawLine(ctx, pointA, pointB)
     }
 
-    function drawLine(ctx,a,b){
+    function drawLine(ctx, a, b) {
         function xScale(x) {
             return map(x, -scale, scale, 0, width);
         }
@@ -425,7 +434,7 @@
 
     function emphasizePoint(ctx, index, points) {
         ctx.fillStyle = `hsla(${(index + 1) / points.length * 360}, 60%, 55%, 0.7)`;
-        drawPoint(ctx,points[index], 16)
+        drawPoint(ctx, points[index], 16)
     }
 
     function drawPoint(ctx, point, radius) {
