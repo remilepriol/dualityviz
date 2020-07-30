@@ -133,22 +133,22 @@
         <p>Input curve: <button id="drawMaths">Draw</button> </p>
         <ul>
             <li> <label for="t0"> t0=</label>
-                <input type="text" class="scalar" id="t0" value="- pi">
+                <input type="text" class="scalar" id="t0" value="- 2pi">
             <label for="t1"> t1=</label>
-                <input type="text" class="scalar" id="t1" value=" pi"> </li>
+                <input type="text" class="scalar" id="t1" value=" 2pi"> </li>
             <li> <label for="x(t)">x(t)=</label>
                 <input type="text" class="function" id="x(t)" value="t"> </li>
             <li> <label for="y(t)">y(t)=</label>
                 <input type="text" class="function" id="y(t)" value="cos(2t)"></li>
-            <li> <label for="resolution">Resolution:</label>
-                <input type="range" id="resolution" value="500" min="100" max="2000" step="100"> </li>
+<!--            <li> <label for="resolution">Resolution:</label>-->
+<!--                <input type="range" id="resolution" value="500" min="100" max="2000" step="100"> </li>-->
         </ul>
     </div>
 
     <div class="canvas-side" style="grid-area: canvas1;">
         <h3 class="canvas-title">Primal</h3>
         <p class="remark">Use your mouse or finger to put some snakes on the plane
-            <button id="glide">Glide</button></p>
+            <button id="slither">and slither !</button></p>
         <canvas id="primal">Primal plane where you can draw any curvy snake.</canvas>
     </div>
     <div class="canvas-side" style="grid-area: canvas2;">
@@ -177,8 +177,7 @@
     // highlight this envelope in dark blue or red in the primal.
     // compute the dual of this envelope and highlight it in the dual.
 
-    // TODO add an input box to input curve equation
-    // Example t0 = -4pi, t1 = 4pi, x(t) = t, y(t) = sin(t)
+    // TODO add predefined equation examples for input boxes, to explore behavior.
 
     function map(x, inMin, inMax, outMin, outMax) {
         return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin
@@ -204,18 +203,13 @@
 
     let curve = [];
     let touching = false;
-    let dualPoints=[];
-    let dualRadius = 10;
-
-    document.getElementById("clear").addEventListener("click",e=>{
-        dualPoints=[];
-    })
 
     document.getElementById("drawMaths").addEventListener("click", e=>{
         // parse inputs
         let t0 = math.eval(document.getElementById("t0").value);
         let t1 = math.eval(document.getElementById("t1").value);
-        let resolution = +document.getElementById("resolution").value;
+        // let resolution = +document.getElementById("resolution").value;
+        let resolution=800;
         let step = (t1 - t0)/(resolution -1);
 
         let xfunc = document.getElementById("x(t)").value;
@@ -277,6 +271,13 @@
         touching = false
     })
 
+    let dualPoints=[];
+    let dualRadius = 10;
+
+    document.getElementById("clear").addEventListener("click",e=>{
+        dualPoints=[];
+    })
+
     dualCanvas.addEventListener('click', e => {
         const box = dualCanvas.getBoundingClientRect();
         let screenX = e.clientX - box.left;
@@ -294,6 +295,19 @@
         dualPoints.push([x, y, screenX, screenY]);
     })
 
+    let slither = {
+        active: false,
+        length: 0,
+        counter: 0
+    };
+
+
+    document.getElementById("slither").onclick = function(){
+        slither.active=true;
+        slither.counter = 0;
+        slither.length = Math.floor(curve.length / 3);
+    }
+
     let previousTime = 0;
     let counter = 0;
 
@@ -302,12 +316,23 @@
         if (timeStamp - previousTime > 60* 2**-document.getElementById("speed").value){
             previousTime = timeStamp;
             counter ++;
+            slither.counter ++;
         }
 
         drawGrid(primalContext, scale, "x", "y");
         drawGrid(dualContext, scale, "a", "b");
 
-        smoothCurve = smoothenCurve(curve).reverse();
+        smoothCurve = smoothenCurve(curve);
+
+        if(slither.active){
+            if (slither.counter + slither.length < curve.length){
+                smoothCurve = smoothCurve.slice(slither.counter, slither.counter + slither.length)
+            }else{
+                slither.active=false
+            }
+        }
+
+        smoothCurve = smoothCurve.reverse()
         drawSnake(primalContext, smoothCurve);
 
         let parametrization = document.querySelector('input[name="parametrization"]:checked').value
