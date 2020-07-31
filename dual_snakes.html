@@ -110,8 +110,8 @@
 <div class="app">
     <div style="grid-area: context;">
         <h1>Dual Snakes</h1>
-        <p>Every point of the (a,b) dual space represents a straight line from the primal space.
-            For instance, (a,b) can represent the line ax+by=1 or y=ax-b.
+        <p>Every point (a,b) of the dual space represents a straight line from the primal space.
+            For instance, (a,b) can parametrize the line y=ax-b.
             The dual of a curve is computed by mapping its tangents to the dual space.</p>
     </div>
     <div style="grid-area: left-edit;">
@@ -129,13 +129,11 @@
             But it makes pretty shapes.</p>
         <p><label for="tangentCheckbox">Animate tangent:</label> <input type="checkbox"
                                                                         id="tangentCheckbox"></p>
-        <p><label for="speed">Speed:</label> <input type="range" id="speed" value="0" min="-4"
-                                                    max="4" step="1"></p>
+        <p><label for="speed">Speed:</label> <input type="range" id="speed" value="2" min="-2"
+                                                    max="7" step="1"></p>
     </div>
 
     <div style="grid-area: right-edit">
-        <p><label for="scale"> Scale:</label>
-            <input type="range" value="2" min="1" max="10" step="0.01" id="scale"></p>
         <p>Input curve:
             <button id="drawMaths">Draw</button>
         </p>
@@ -151,6 +149,8 @@
             <!--            <li> <label for="resolution">Resolution:</label>-->
             <!--                <input type="range" id="resolution" value="500" min="100" max="2000" step="100"> </li>-->
         </ul>
+        <p><label for="scale"> Scale:</label>
+            <input type="range" value="2" min="1" max="10" step="0.01" id="scale"></p>
     </div>
 
     <div class="canvas-side" style="grid-area: canvas1;">
